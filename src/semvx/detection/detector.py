@@ -140,30 +140,32 @@ def validate_semver_format(version: str) -> bool:
     return bool(re.match(pattern, version.strip()))
 
 
-def get_highest_version(versions: List[str]) -> Optional[str]:
+def get_highest_version(versions: List[str]) -> str:
     """
     Find the highest version from a list using semver comparison.
-    
+
     Implements "highest version wins" logic for version synchronization.
-    
+
     Args:
         versions: List of version strings to compare
-        
+
     Returns:
-        Highest version string, or None if list is empty
-        
+        Highest version string, or "v0.0.0" if list is empty or all invalid
+
     Examples:
         >>> get_highest_version(["v1.2.3", "v1.2.4", "v1.1.0"])
         "v1.2.4"
         >>> get_highest_version([])
-        None
+        "v0.0.0"
+        >>> get_highest_version(["invalid", "bad"])
+        "v0.0.0"
     """
     if not versions:
-        return None
-    
+        return "v0.0.0"
+
     valid_versions = [v for v in versions if validate_semver_format(v)]
     if not valid_versions:
-        return None
+        return "v0.0.0"
     
     highest = valid_versions[0]
     for version in valid_versions[1:]:
@@ -189,19 +191,19 @@ def detect_repository_type(repo_path: Path) -> str:
     Returns:
         "gitsim" if .gitsim directory exists
         "git" if .git directory exists
-        "none" if neither exists
+        "directory" if neither exists (plain directory)
     """
     repo_path = Path(repo_path).resolve()
-    
+
     # Check for GitSim first (takes priority over git)
     if (repo_path / ".gitsim").exists():
         return "gitsim"
-    
+
     # Check for standard git repository
     if (repo_path / ".git").exists():
         return "git"
-    
-    return "none"
+
+    return "directory"
 
 
 def check_gitsim_availability() -> bool:
@@ -996,6 +998,7 @@ def get_repository_context(repo_path: Path) -> Dict:
     # Repository metadata (would extract from actual git/gitsim commands)
     repository_info = {
         "path": str(repo_path),
+        "root": str(repo_path),  # Add missing 'root' field
         "type": repo_type,
         "branch": "main",  # Would extract from git/gitsim
         "is_clean": True,  # Would check git status
