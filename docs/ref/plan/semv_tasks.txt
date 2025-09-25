@@ -1,0 +1,370 @@
+SEMV v3.0.0 Python Rewrite - Implementation Tasks
+==================================================
+
+Project Structure: Modular Python package with consolidated file artifacts
+Target: 800-1,200 lines total across all modules
+Architecture: Multi-module consolidation for iterative development
+
+## Implementation Strategy
+
+### Module-to-Artifact Generation Approach
+Each module directory will be consolidated into a single artifact for iterative development, but the artifact will contain multiple logically separated sections that correspond to the original file structure. This allows:
+
+1. **Iterative Development**: Work on complete functional units
+2. **Future Expansion**: Easy to split artifacts back into individual files if needed
+3. **Maintainable Size**: Each artifact remains 100-400 lines (manageable)
+4. **Clear Separation**: Logical boundaries preserved within consolidated files
+
+### Artifact Structure Pattern
+Each module artifact follows this internal organization:
+
+```python
+# MODULE_NAME_module.py
+"""
+Consolidated module: MODULE_NAME
+Generated from: path/file1.py, path/file2.py, path/file3.py
+Target size: XXX-YYY lines
+"""
+
+# ===== SECTION: file1.py equivalent =====
+# Classes and functions that would have been in file1.py
+
+# ===== SECTION: file2.py equivalent =====  
+# Classes and functions that would have been in file2.py
+
+# ===== SECTION: file3.py equivalent =====
+# Classes and functions that would have been in file3.py
+```
+
+### Development Workflow
+1. **Generate consolidated artifact** containing all module functionality
+2. **Develop and test** the complete module as a unit
+3. **Iterate on the artifact** without worrying about file boundaries
+4. **Future refactoring**: Can split into individual files later if complexity grows
+
+### Artifact Size Management
+If any module grows beyond comfortable editing size (>500 lines), it can be split:
+- **Hot split**: Break into multiple artifacts during development
+- **Cold split**: Refactor into individual files after completion
+- **Hybrid approach**: Keep some modules consolidated, split others as needed
+
+## Module-Level Tasks (Consolidated Artifacts)
+
+Each module below represents a single artifact file containing all functionality from multiple logical files. The internal structure maintains clear boundaries between conceptual components while keeping development manageable.
+
+### CORE_MODULE - Core Business Logic (core_module.py)
+Files: core/version.py, core/git.py, core/project.py, core/config.py
+Target Size: 275-375 lines total
+Dependencies: subprocess, os, pathlib, packaging.version, shutil
+Responsibilities:
+- Version parsing, comparison, and validation using packaging.version
+- Git operations with subprocess wrappers (tags, commits, branches)
+- GitSim integration with repository type detection and command routing
+- **Enhanced project detection** with manifest-first priority to prevent bash false positives
+- Multi-language classification with hierarchical detection safeguards
+- Configuration management with XDG+ compliance
+- Release adoption marker detection and management
+- Automatic tag pointer management (latest, stable)
+- **Enhanced commit analysis** with SEMV v2.1 label conventions (16 labels + ignore category)
+
+Key Functions:
+- parse_version(), compare_versions(), validate_semver()
+- detect_repo_type(), check_gitsim_available(), route_git_command()
+- **detect_project_types_hierarchical()** - Manifest-first detection with bash fallback prevention
+- get_latest_tag(), create_tag(), check_release_marker()
+- **analyze_commit_labels_v21()** - Enhanced label parsing with ignore category
+- detect_project_types(), resolve_multi_language_conflicts()
+- load_config(), get_xdg_paths(), migrate_legacy_config()
+
+Enhanced Detection Requirements:
+- **Manifest priority enforcement**: Bash detection ONLY when no manifest files found
+- **Generated file exclusion**: Skip files with `# generated` tags for version detection
+- **Build.sh awareness**: Route to parts/ directory for generated script versions
+- **Expanded commit labeling**: Support 16 labels across 5 categories including ignore
+- Repository detection: .gitsim vs .git vs none
+- GitSim availability checking with helpful error messages
+- Command routing: subprocess calls to 'gitsim' vs 'git' based on detection
+- Enhanced status reporting for simulated environments
+- Error handling for GitSim projects without GitSim installation
+
+### UTILS_MODULE - Shared Utilities
+Files: utils/files.py, utils/validation.py
+Target Size: 100-150 lines total
+Dependencies: pathlib, re, typing
+Responsibilities:
+- File operations with atomic writes and backup/rollback
+- Path management and directory traversal
+- Input validation for versions, file paths, and command arguments
+- Error handling with user-friendly messages
+- Common utility functions used across modules
+
+Key Functions:
+- atomic_write(), backup_file(), rollback_changes()
+- validate_version_format(), validate_file_path()
+- create_user_error(), handle_subprocess_error()
+Files: parsers/rust.py, parsers/javascript.py, parsers/python_parser.py, parsers/bash.py
+Target Size: 150-200 lines total
+Dependencies: json, tomli, re, pathlib
+Responsibilities:
+- Extract/write versions from Rust Cargo.toml [package] sections
+- Extract/write versions from JavaScript package.json files
+- Extract/write versions from Python pyproject.toml [project] sections and setup.py
+- Extract/write versions from Bash scripts using 5 distinct patterns:
+  * BashFX build.sh (build.sh + parts/ + build.map)
+  * BashFX simple (prefix-name/ + name.sh)
+  * Standalone (foldername.sh)
+  * semvrc (.semvrc configuration)
+  * Generic (# semv-version: comments)
+
+Key Functions:
+- extract_rust_version(), write_rust_version()
+- extract_js_version(), write_js_version()  
+- extract_python_version(), write_python_version()
+- detect_bash_pattern(), extract_bash_version(), write_bash_version()
+
+### COMMANDS_MODULE - High-Level Command Implementations
+Files: commands/bump.py, commands/sync.py, commands/status.py, commands/lifecycle.py, commands/hooks.py, commands/release.py
+Target Size: 300-400 lines total
+Dependencies: core module, parsers module, ui module
+Responsibilities:
+- Version bumping with commit analysis and SEMV v2.0 label conventions
+- Multi-source version synchronization with "highest version wins" resolution
+- Dashboard and status reporting with simple vs release-aware modes
+- Installation/uninstallation with XDG+ directory management
+- Hook system for extensible automation
+- Optional release flow system with progressive adoption
+- Amend workflow integration (--amend flag support)
+- Enhanced readiness assessment (can command)
+
+Key Functions:
+- do_bump(), analyze_commits(), create_version_tag()
+- do_sync(), resolve_version_conflicts(), sync_all_sources()
+- do_status(), show_dashboard(), assess_capabilities()
+- do_install(), do_uninstall(), migrate_installation()
+- execute_hooks(), manage_release_flow()
+
+### UI_MODULE - User Interface and Output Formatting
+Files: ui/display.py, ui/themes.py, ui/views.py, ui/formatter.py
+Target Size: 150-200 lines total
+Dependencies: subprocess (for boxy), shutil
+Responsibilities:
+- Boxy integration with subprocess calls and graceful fallback
+- Semantic theme definitions (error, success, warning, info) without emoji
+- Consolidated output view formatting for all commands
+- Progressive disclosure patterns (simple vs release-aware views)
+- Command gating with helpful guidance messages
+- Output formatting utilities and text processing
+
+Key Functions:
+- render_with_boxy(), fallback_render()
+- get_theme_config(), apply_semantic_theme()
+- show_status_simple(), show_status_release_aware()
+- show_publish_gate_message(), show_readiness_assessment()
+- format_version_table(), format_conflict_report()
+
+### ADAPTERS_MODULE - External Integration Layer
+Files: adapters/__init__.py, adapters/base.py, adapters/gitsim.py, adapters/blade.py
+Target Size: 150-200 lines total
+Dependencies: core module, subprocess, abc
+Responsibilities:
+- Abstract adapter interface for external tool integration
+- GitSim adapter for simulated repository environments
+- Blade adapter for multi-repository management integration
+- Cross-cutting concerns for external tool communication
+- Plugin architecture for future integrations
+
+Key Functions:
+- BaseAdapter (abstract), AdapterRegistry, load_adapters()
+- GitSimAdapter: repository detection, command routing, state management
+- BladeAdapter: multi-repo coordination, version synchronization across repos
+- register_adapter(), get_adapter(), adapter_available()
+
+Adapter Interface Requirements:
+- Standardized integration contract for external tools
+- Repository detection and validation
+- Command translation and result normalization
+- Error handling and graceful degradation
+- Configuration management for adapter-specific settings
+Files: utils/files.py, utils/validation.py
+Target Size: 100-150 lines total
+Dependencies: pathlib, re, typing
+Responsibilities:
+- File operations with atomic writes and backup/rollback
+- Path management and directory traversal
+- Input validation for versions, file paths, and command arguments
+- Error handling with user-friendly messages
+- Common utility functions used across modules
+
+Key Functions:
+- atomic_write(), backup_file(), rollback_changes()
+- validate_version_format(), validate_file_path()
+- create_user_error(), handle_subprocess_error()
+
+## Individual File Tasks (Standalone)
+
+### CLI_MAIN - Main CLI Entry Point
+File: cli.py
+Target Size: 125-175 lines
+Dependencies: click, all modules
+Responsibilities:
+- Click-based argument parsing with comprehensive flag support
+- Command routing and dispatch to appropriate module functions
+- 100% command-line compatibility with SEMV v2.0.0
+- **Limited JSON output** for status/dashboard commands with `--json` flag
+- **Blade integration support** via `--json-blade` flag for specific output format
+- Help text with release-gated command guidance
+- Environment variable integration
+- Main entry point and error handling
+
+Key Functions:
+- main(), parse_arguments(), dispatch_command()
+- setup_environment(), handle_global_flags()
+- **format_json_output()** - Simple JSON for status/info commands
+- **format_blade_json()** - Blade-specific JSON format for integration
+
+### PACKAGE_INIT - Package Initialization
+File: __init__.py
+Target Size: 20-30 lines
+Dependencies: none
+Responsibilities:
+- Package version definition
+- Public API exports
+- Module initialization
+- Compatibility imports
+
+## Implementation Order and Dependencies
+
+### Phase 1: Foundation (Week 1-2)
+1. PACKAGE_INIT (standalone) - Basic package structure
+2. UTILS_MODULE (consolidated) - Shared utilities needed by all modules  
+3. CORE_MODULE (consolidated) - Core business logic and git operations with GitSim integration
+4. UI_MODULE (consolidated) - Output formatting and Boxy integration
+
+### Phase 2: Parsers and Adapters (Week 2-3)
+5. PARSERS_MODULE (consolidated) - All language-specific version handling
+6. ADAPTERS_MODULE (consolidated) - External tool integration layer with GitSim and Blade support
+
+### Phase 3: Commands (Week 3-4) 
+7. COMMANDS_MODULE (consolidated) - All high-level command implementations
+8. CLI_MAIN (standalone) - CLI interface and argument parsing
+
+## Testing Requirements Per Module
+
+### CORE_MODULE Tests
+- Version parsing edge cases (pre-release, build metadata)
+- Git operation error handling and repository state variations
+- Project detection across all supported languages and patterns
+- Configuration migration and XDG+ compliance
+- Release adoption marker management
+
+### PARSERS_MODULE Tests  
+- Valid/invalid file parsing for all supported formats
+- Round-trip testing (extract → write → extract)
+- Bash pattern recognition accuracy across all 5 patterns
+- Error handling for malformed/missing files
+- Unicode and special character handling
+
+### COMMANDS_MODULE Tests
+- Commit analysis with SEMV v2.0 label conventions
+- Version synchronization conflict resolution scenarios
+- Amend workflow integration across different git states
+- Release system progressive adoption workflows
+- Hook execution and error handling
+
+### ADAPTERS_MODULE Tests
+- Abstract adapter interface compliance testing
+- GitSim integration: repository detection, command routing, result parsing
+- Blade integration: multi-repo coordination, version synchronization protocols
+- Adapter registration and discovery mechanisms
+- Error handling when external tools unavailable
+- Configuration management for adapter-specific settings
+- Cross-cutting concern validation (logging, metrics, etc.)
+- Boxy integration with subprocess handling
+- Fallback behavior when Boxy unavailable
+- View switching between simple and release-aware modes
+- Theme application and output formatting consistency
+
+### UTILS_MODULE Tests
+- Atomic file operations with rollback scenarios
+- Input validation for all expected input types
+- Error message formatting and user guidance
+
+### CLI_MAIN Tests
+- Argument parsing compatibility with SEMV v2.0.0
+- Command dispatch and error propagation
+- Environment variable integration
+- Help text accuracy and completeness
+
+## Performance Targets
+
+### File Parsing Performance
+- JSON/TOML parsing: <10ms per file (10x improvement over Bash)
+- Bash pattern detection: <50ms per repository scan
+- Multi-file synchronization: <100ms for typical repositories
+
+### Git Operations Performance  
+- Maintain current performance (already subprocess-based)
+- Tag operations: <200ms for typical repositories
+- Commit analysis: <500ms for 100 commits
+
+### Startup Performance
+- Python interpreter + import: <150ms
+- Command dispatch: <50ms
+- Total startup: <200ms target
+
+## Quality Gates
+
+### Code Quality
+- Type hints throughout (mypy compliance)
+- Docstrings for all public functions
+- Consistent error handling patterns
+- No circular dependencies between modules
+
+### Test Coverage
+- Minimum 85% coverage per module
+- Integration tests for multi-module workflows  
+- Regression tests against SEMV v2.0.0 behavior
+- Performance regression prevention
+
+### User Experience
+- 100% command-line compatibility maintained
+- Clear error messages with actionable guidance
+- Progressive feature disclosure
+- Consistent output formatting
+
+## Risk Mitigation
+
+### Technical Risks
+- Performance regression: Continuous benchmarking in CI/CD
+- Compatibility breaking: Side-by-side testing with v2.0.0
+- Boxy integration failure: Comprehensive fallback testing
+
+### User Adoption Risks  
+- Migration complexity: Automated migration tooling
+- Feature confusion: Progressive disclosure and gated commands
+- Workflow disruption: Maintain existing command patterns
+
+## Success Criteria
+
+### Module Completion Criteria
+Each module artifact must demonstrate:
+- All functions implemented and tested
+- Integration with dependent modules working
+- Performance targets met
+- Documentation complete
+
+### Overall Project Completion
+- 70% code reduction achieved (4,000+ → 800-1,200 lines)
+- 10x performance improvement in file parsing
+- 100% functional parity with SEMV v2.0.0
+- 85% test coverage across all modules
+- Successful migration path from Bash implementation
+
+## Notes
+
+- Module consolidation allows iterative development on complete functional units
+- Each consolidated artifact should be self-contained with clear interfaces
+- Top-level files (cli.py, __init__.py) remain standalone for clarity
+- Progressive complexity: start with utils/core, build up to commands
+- All modules should gracefully handle missing dependencies (Boxy, git, etc.)
+- Maintain backwards compatibility throughout development process
