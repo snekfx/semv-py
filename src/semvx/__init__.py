@@ -11,7 +11,10 @@ __version__ = "3.0.0-dev"
 __author__ = "SEMV Development Team"
 __email__ = "dev@semv.tools"
 
-# Core imports will be added as modules are implemented
-# For now, only expose version info to avoid import errors
-
-__all__ = ["__version__"]
+# Core imports
+try:
+    from semvx.core import SemanticVersion, VersionParseError
+    __all__ = ["SemanticVersion", "VersionParseError", "__version__"]
+except ImportError:
+    # Fallback if core module not available
+    __all__ = ["__version__"]
