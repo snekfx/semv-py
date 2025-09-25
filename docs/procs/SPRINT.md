@@ -1,32 +1,50 @@
-# Current Sprint - Meta Process Implementation & Architecture
+# Current Sprint - Core Module Development
 
 ## Sprint Goal
-Complete Meta Process v2 implementation and establish foundation for SEMV Python development.
+Implement core version management functionality to enable semantic versioning operations.
 
 ## Active Tasks (Priority Order)
 
-### 🔥 HIGH PRIORITY - Meta Process Completion
-- [ ] **META-01**: Complete remaining process documents (ROADMAP.md, TASKS.md, DONE.md) - 2 SP
-- [ ] **META-02**: Implement Phase 4 - Agent Analysis Consolidation - 3 SP
-- [ ] **META-03**: Create bin/validate-docs.sh validation script - 2 SP
-- [ ] **META-04**: Test self-hydrating workflow with fresh agent - 1 SP
-- [ ] **META-05**: Merge admin/meta-process → main branch - 1 SP
+### 🔥 CRITICAL - Core Module Implementation
+- [ ] **CORE-01**: Implement SemanticVersion class - 5 SP
+  - Parse version strings with validation
+  - Support pre-release and build metadata
+  - Version comparison and ordering
+- [ ] **CORE-02**: Create version bump logic - 4 SP
+  - Major, minor, patch increment logic
+  - Pre-release version handling
+  - Custom version bump patterns
+- [ ] **CORE-03**: Connect core to CLI commands - 3 SP
+  - Wire bump command to version logic
+  - Implement version display command
+  - Add dry-run mode for testing
 
-### 🎯 MEDIUM PRIORITY - Architecture Foundation
-- [ ] **ARCH-01**: Design core module structure based on semv_concepts.md - 5 SP
-- [ ] **ARCH-02**: Create Python project structure (src/, tests/, pyproject.toml) - 3 SP
-- [ ] **ARCH-03**: Define interface contracts between modules - 3 SP
+### 🎯 HIGH PRIORITY - Git Integration
+- [ ] **CORE-04**: Implement git repository interface - 6 SP
+  - Repository detection and validation
+  - Branch and tag operations
+  - Commit analysis for version bumping
+- [ ] **CORE-05**: Create tag management system - 4 SP
+  - Semantic version tag creation
+  - Tag validation and conflict resolution
+  - Remote tag synchronization
 
-### 📋 LOW PRIORITY - Planning & Documentation
-- [ ] **PLAN-01**: Extract detailed tasks from semv_python_buildout_plan.md - 2 SP
-- [ ] **PLAN-02**: Prioritize tasks by dependency analysis - 2 SP
-- [ ] **PLAN-03**: Update project roadmap with realistic timelines - 1 SP
+### 📋 MEDIUM PRIORITY - Testing & Fixes
+- [ ] **TEST-01**: Fix failing detection tests - 2 SP
+  - Update tests to match actual API
+  - Ensure 100% test coverage for core module
+- [ ] **TEST-02**: Add integration tests for version operations - 3 SP
+  - Test version bumping scenarios
+  - Test git tag operations
+  - Test multi-project synchronization
 
 ## Completed This Sprint
-- ✅ **META Process Setup**: Directory structure, core documents
-- ✅ **START.txt**: Single entry point created
-- ✅ **PROCESS.md**: Master workflow documented
-- ✅ **QUICK_REF.md**: 30-second context reference
+- ✅ **ARCH-01**: Python project structure created
+- ✅ **ARCH-02**: Detection module integrated (shared source)
+- ✅ **ARCH-03**: CLI interface complete with detect/status commands
+- ✅ **ARCH-05**: Testing infrastructure with pytest, fixtures, CI/CD
+- ✅ **ARCH-06**: Testing patterns and fallback runner
+- ✅ **Local Development**: Makefile, setup script, DEVELOPMENT.md
 
 ## Sprint Metrics
 - **Committed Story Points**: 9 (Meta Process completion)

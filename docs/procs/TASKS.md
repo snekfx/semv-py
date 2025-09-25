@@ -49,10 +49,11 @@
   - ✅ Maintain independence from blade team (shared source, no dependency)
   - ✅ Zero external dependencies - pure Python stdlib
   - ✅ Full compatibility with existing bash semv detection logic
-- [ ] **ARCH-03**: Create basic CLI interface as 'semvx' (3 SP)
+- [x] **ARCH-03**: Create basic CLI interface as 'semvx' (3 SP) - DONE
   - ✅ Basic semvx command with --help, --version, detect subcommand
-  - [ ] Namespace separation from original semv bash script
-  - [ ] Integration with detection module for project analysis
+  - ✅ Namespace separation from original semv bash script
+  - ✅ Integration with detection module for project analysis
+  - ✅ Added status command and stub commands for version management
 
 ### Module Design
 - [ ] **ARCH-03**: Define data models and types (3 SP)
@@ -65,14 +66,17 @@
   - Design dependency injection patterns
 
 ### Testing Foundation
-- [ ] **ARCH-05**: Set up testing infrastructure (4 SP)
-  - Configure pytest with coverage reporting
-  - Create test fixtures for common scenarios
-  - Set up CI/CD pipeline (GitHub Actions)
-- [ ] **ARCH-06**: Define testing patterns and conventions (2 SP)
-  - Unit test patterns for each module type
-  - Integration test strategies
-  - Mock patterns for external dependencies
+- [x] **ARCH-05**: Set up testing infrastructure (4 SP) - DONE
+  - ✅ Configure pytest with coverage reporting
+  - ✅ Create test fixtures for common scenarios
+  - ✅ Set up CI/CD pipeline (GitHub Actions)
+  - ✅ Created Makefile for local testing
+  - ✅ Development setup script (scripts/setup-dev.sh)
+- [x] **ARCH-06**: Define testing patterns and conventions (2 SP) - DONE
+  - ✅ Unit test patterns for each module type
+  - ✅ Integration test strategies
+  - ✅ Mock patterns for external dependencies
+  - ✅ Fallback test runner for environments without pytest
 
 **Phase 2 Total**: 19 SP
 
