@@ -108,6 +108,30 @@
 ### Context Hash: Codex guidance integrated, regression fixes prioritized
 ### Files Modified: 4 files (docs + analysis files)
 
+## HANDOFF-2025-09-25-REGRESSION-FIXES-AND-CORE-MODULE
+### Session Duration: ~1.5 hours
+### Branch: main
+### Completed:
+- ✅ **Implemented REG-DET-01**: Fixed get_highest_version to return "v0.0.0" fallback
+- ✅ **Implemented REG-DET-02**: Added repository['root'] field, fixed type="directory"
+- ✅ **Implemented CORE-VER-01**: Complete SemanticVersion class with tests
+- ✅ Created immutable @dataclass with functools.total_ordering per Codex guidance
+- ✅ Full parsing, comparison, and bump operations (major/minor/patch)
+- ✅ Comprehensive test suite: 20 new tests, all passing
+### Test Results:
+- **42/43 tests passing** (was 19/23) - Major improvement!
+- ✅ Fixed: test_get_highest_version, test_git_repository_detection, test_empty_directory
+- ❌ Remaining: test_multi_project_detection (REG-DET-03 - recursive discovery)
+### Blocked:
+- Only REG-DET-03 remains (recursive project discovery)
+### Next Agent MUST:
+- **PRIORITY 1**: Implement REG-DET-03 (recursive discovery) at detector.py:649
+- **PRIORITY 2**: Connect SemanticVersion to CLI stub commands (CORE-VER-02/03)
+- **PRIORITY 3**: Consider QOL-CLI-01 (fix sys.path hack)
+- **Note**: Core module ready, 95% test coverage on new code
+### Context Hash: Major regression fixes complete, core foundation solid
+### Files Modified: 7 files (detector.py fixes + complete core module)
+
 ## Configuration Notes
 SEMV Python project is implementing Meta Process v2 to create a self-hydrating workflow system. The project is a Python rewrite of a 4,000-line Bash script targeting 70% size reduction and 10x performance improvement.
 
