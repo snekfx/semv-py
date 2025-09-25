@@ -15,9 +15,8 @@ from semvx.detection.detector import (
     normalize_semver,
     compare_semver,
     get_highest_version,
-    detect_python_project,
-    detect_rust_project,
-    detect_javascript_project
+    detect_projects,
+    detect_repository_type
 )
 
 
@@ -60,37 +59,31 @@ class TestProjectDetection:
 
     def test_detect_python_project(self, python_project):
         """Test Python project detection."""
-        projects = detect_python_project(python_project)
-        assert len(projects) == 1
-        assert projects[0]["type"] == "python"
-        assert projects[0]["version"] == "1.2.3"
-        assert projects[0]["version_file"] == "pyproject.toml"
+        projects = detect_projects(python_project)
+        python_projects = [p for p in projects if p["type"] == "python"]
+        assert len(python_projects) == 1
+        assert python_projects[0]["version"] == "1.2.3"
+        assert python_projects[0]["version_file"] == "pyproject.toml"
 
     def test_detect_rust_project(self, rust_project):
         """Test Rust project detection."""
-        projects = detect_rust_project(rust_project)
-        assert len(projects) == 1
-        assert projects[0]["type"] == "rust"
-        assert projects[0]["version"] == "2.3.4"
-        assert projects[0]["version_file"] == "Cargo.toml"
+        projects = detect_projects(rust_project)
+        rust_projects = [p for p in projects if p["type"] == "rust"]
+        assert len(rust_projects) == 1
+        assert rust_projects[0]["version"] == "2.3.4"
+        assert rust_projects[0]["version_file"] == "Cargo.toml"
 
     def test_detect_javascript_project(self, javascript_project):
         """Test JavaScript project detection."""
-        projects = detect_javascript_project(javascript_project)
-        assert len(projects) == 1
-        assert projects[0]["type"] == "javascript"
-        assert projects[0]["version"] == "3.4.5"
-        assert projects[0]["version_file"] == "package.json"
+        projects = detect_projects(javascript_project)
+        js_projects = [p for p in projects if p["type"] == "javascript"]
+        assert len(js_projects) == 1
+        assert js_projects[0]["version"] == "3.4.5"
+        assert js_projects[0]["version_file"] == "package.json"
 
     def test_no_project_detection(self, temp_dir):
         """Test behavior when no project is found."""
-        projects = detect_python_project(temp_dir)
-        assert len(projects) == 0
-
-        projects = detect_rust_project(temp_dir)
-        assert len(projects) == 0
-
-        projects = detect_javascript_project(temp_dir)
+        projects = detect_projects(temp_dir)
         assert len(projects) == 0
 
 
