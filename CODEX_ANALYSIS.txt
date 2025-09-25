@@ -1,0 +1,215 @@
+================================================================================
+CODEX ANALYSIS REQUEST - SEMV PYTHON PROJECT
+================================================================================
+Date: 2025-09-25
+Project: SEMV Python (semv-py) - Semantic Version Manager Rewrite
+Repository: /home/xnull/repos/code/python/snekfx/semv-py
+
+================================================================================
+PROJECT OVERVIEW
+================================================================================
+
+SEMV Python is a strategic rewrite of a 4,000-line Bash script into modular
+Python, targeting:
+- 70% size reduction (4,000 → 800-1,200 lines)
+- 10x performance improvement
+- Modular, testable, extensible architecture
+- 100% functional compatibility with original Bash SEMV
+
+The project manages semantic versions across multi-language projects with
+intelligent synchronization, supporting Rust, JavaScript, Python, and Bash.
+
+================================================================================
+KEY CONCEPTS & ARCHITECTURE
+================================================================================
+
+1. NAMESPACE SEPARATION
+   - CLI namespace: 'semvx' (Python) vs 'semv' (original Bash)
+   - Package name: semvx
+   - Avoids conflicts with existing bash implementation
+
+2. SHARED DETECTION MODULE
+   - Located: src/semvx/detection/detector.py
+   - Copied from: docs/ref/detection/code_ref/detection_core_module.py
+   - Shared with Blade team (lift-and-shift, not dependency)
+   - Zero external dependencies - pure Python stdlib
+   - 1098 lines of detection logic
+
+3. VERSION MANAGEMENT PHILOSOPHY
+   - "Highest version wins" algorithm for conflict resolution
+   - Semantic versioning (major.minor.patch) with pre-release support
+   - Multi-project synchronization within repositories
+   - Git and GitSim integration
+
+4. META PROCESS V2
+   - Self-hydrating workflow system
+   - 5-minute agent onboarding capability
+   - Process documentation in docs/procs/
+
+================================================================================
+CURRENT PROJECT STATE
+================================================================================
+
+COMPLETED:
+✅ Phase 1: Foundation & Meta Process (~80% complete)
+✅ Phase 2: Architecture & Core Design (~70% complete)
+   - Python project structure (src/semvx/)
+   - CLI interface with detect/status commands
+   - Testing infrastructure (pytest, CI/CD, Makefile)
+   - Local development tools
+
+IN PROGRESS:
+🔄 Phase 3: Core Module Implementation (0% - NEXT PRIORITY)
+   - Need SemanticVersion class
+   - Version parsing and bump logic
+   - Git integration
+
+TESTING STATUS:
+- 19 tests passing
+- 4 tests failing (API mismatches with detection module)
+- Coverage: ~56% (target 80%)
+- Local testing via: make test or make test-quick
+
+================================================================================
+KEY FILES TO REVIEW
+================================================================================
+
+ARCHITECTURE & DESIGN:
+- docs/ref/semv_concepts.md         # Core patterns and philosophy
+- docs/ref/plan/semv_prd.md        # Product requirements
+- docs/ref/plan/semv_python_buildout_plan.md  # Implementation strategy
+
+SOURCE CODE:
+- src/semvx/cli/main.py            # CLI entry point (working)
+- src/semvx/detection/detector.py  # Shared detection module (1098 lines)
+- src/semvx/__init__.py            # Package initialization
+- pyproject.toml                   # Project configuration
+
+TESTING:
+- tests/unit/test_detection.py     # Detection module tests
+- tests/unit/test_cli.py           # CLI tests
+- tests/conftest.py               # Test fixtures
+- tests/run_tests.py              # Fallback test runner
+
+DEVELOPMENT:
+- Makefile                        # Development commands
+- DEVELOPMENT.md                  # Local testing guide
+- scripts/setup-dev.sh           # Development setup script
+
+PROCESS DOCS:
+- docs/procs/CONTINUE.md         # Session handoff status
+- docs/procs/TASKS.md            # Detailed task breakdown
+- docs/procs/SPRINT.md           # Current sprint priorities
+- docs/procs/ROADMAP.md          # Strategic milestones
+
+================================================================================
+CRITICAL TASKS NEEDING ATTENTION
+================================================================================
+
+IMMEDIATE PRIORITIES (China's Assessment):
+
+1. CORE-01: Implement SemanticVersion class (5 SP)
+   - Parse version strings with validation
+   - Support pre-release and build metadata
+   - Version comparison and ordering
+
+2. CORE-02: Create version bump logic (4 SP)
+   - Major, minor, patch increment logic
+   - Pre-release version handling
+   - Custom version bump patterns
+
+3. CORE-03: Connect core to CLI commands (3 SP)
+   - Wire bump command to version logic
+   - Implement version display command
+   - Add dry-run mode for testing
+
+TECHNICAL DEBT:
+- Fix 4 failing tests (API mismatches)
+- Improve test coverage from 56% to 80%
+- Complete ARCH-DEBT-01: Architecture Definition Gap (8 SP)
+
+================================================================================
+ORIGINAL BASH REFERENCE
+================================================================================
+
+Original implementation: ~/repos/code/shell/bashfx/fx-semv (not in this repo)
+Latest version in repo: docs/ref/plan/semv.sh (for reference)
+
+Key patterns from Bash:
+- BashFX build.sh detection patterns
+- Version synchronization logic
+- Tag management approach
+- Multi-project handling
+
+================================================================================
+INTEGRATION REQUIREMENTS
+================================================================================
+
+BOXY INTEGRATION:
+- docs/ref/integration/boxy_integration.md
+- Must work with Boxy workflow system
+- Command interface integration required
+
+GITSIM INTEGRATION:
+- docs/ref/integration/gitsim_integration.md
+- Simulated git environment support
+- Dry-run capabilities
+
+BLADE INTEGRATION:
+- Shared detection module (already integrated)
+- Advanced feature delegation planned
+
+================================================================================
+QUALIFYING QUESTIONS FOR CODEX
+================================================================================
+
+1. ARCHITECTURE REVIEW:
+   - Is the current module structure optimal for the 70% size reduction goal?
+   - Should we use inheritance or composition for SemanticVersion class?
+   - Any concerns with the shared detection module approach?
+
+2. CORE MODULE DESIGN:
+   - What pattern should we use for version representation?
+   - Should version operations be immutable or mutable?
+   - How should we handle version parsing errors?
+
+3. TESTING STRATEGY:
+   - Should we fix the 4 failing tests before proceeding?
+   - What's the priority: test coverage or new features?
+   - Integration test approach for git operations?
+
+4. PERFORMANCE CONSIDERATIONS:
+   - Key areas to optimize for 10x improvement?
+   - Caching strategy for repeated operations?
+   - Async operations worth considering?
+
+5. API DESIGN:
+   - Public API surface for the core module?
+   - Plugin architecture for language parsers?
+   - Error handling and result types?
+
+================================================================================
+SPECIFIC REVIEW REQUESTS
+================================================================================
+
+1. Review the current architecture and identify gaps or improvements
+2. Suggest design patterns for the SemanticVersion class implementation
+3. Identify potential performance bottlenecks in the detection module
+4. Recommend testing strategies for version management operations
+5. Generate new tasks for technical debt or missing functionality
+6. Assess if we're on track for the 70% size reduction goal
+
+================================================================================
+EXPECTED OUTPUTS
+================================================================================
+
+Please provide:
+1. Architectural assessment and recommendations
+2. Specific implementation guidance for SemanticVersion class
+3. List of new tasks to add to TASKS.md
+4. Priority adjustments if needed
+5. Any critical issues or blockers identified
+
+================================================================================
+END OF ANALYSIS REQUEST
+================================================================================

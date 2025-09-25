@@ -1,23 +1,33 @@
-# Current Sprint - Core Module Development
+# Current Sprint - Critical Fixes & Core Module
 
 ## Sprint Goal
-Implement core version management functionality to enable semantic versioning operations.
+Fix critical regressions identified by Codex, then implement core version management.
 
-## Active Tasks (Priority Order)
+## Active Tasks (Priority Order - China & Codex Aligned)
 
-### 🔥 CRITICAL - Core Module Implementation
-- [ ] **CORE-01**: Implement SemanticVersion class - 5 SP
-  - Parse version strings with validation
+### 🚨 P1 - CRITICAL FIXES (Must complete first)
+- [ ] **REG-DET-01**: Fix get_highest_version fallback - 1 SP
+  - Return "v0.0.0" for empty lists (not None)
+  - Location: src/semvx/detection/detector.py:143
+  - Unblocks 1 failing test
+- [ ] **REG-DET-02**: Add 'root' field to repository context - 1 SP
+  - Add missing field to context dict
+  - Fix type="directory" (not "none") for plain dirs
+  - Unblocks 2 failing tests
+
+### 🔥 P2 - CORE MODULE (After fixes)
+- [ ] **CORE-VER-01**: Implement immutable SemanticVersion - 3 SP
+  - Use @dataclass with functools.total_ordering
+  - Immutable pattern per Codex guidance
+  - Foundation for all version operations
+- [ ] **REG-DET-03**: Recursive project discovery - 3 SP
+  - Walk subdirectories for nested projects
+  - Add bounded recursion with ignores
+  - Unblocks 1 failing test
+- [ ] **CORE-VER-02**: Version parsing with validation - 2 SP
+  - Parse semantic version strings
+  - Raise VersionParseError on invalid
   - Support pre-release and build metadata
-  - Version comparison and ordering
-- [ ] **CORE-02**: Create version bump logic - 4 SP
-  - Major, minor, patch increment logic
-  - Pre-release version handling
-  - Custom version bump patterns
-- [ ] **CORE-03**: Connect core to CLI commands - 3 SP
-  - Wire bump command to version logic
-  - Implement version display command
-  - Add dry-run mode for testing
 
 ### 🎯 HIGH PRIORITY - Git Integration
 - [ ] **CORE-04**: Implement git repository interface - 6 SP

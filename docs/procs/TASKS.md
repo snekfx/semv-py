@@ -82,17 +82,63 @@
 
 ---
 
+## 🚨 PRIORITY FIXES (From Codex Review)
+
+### P1 - CRITICAL (Must fix before proceeding)
+- [ ] **REG-DET-01**: Fix get_highest_version to return "v0.0.0" for empty lists (1 SP)
+  - Currently returns None, breaking tests and API contract
+  - Location: src/semvx/detection/detector.py:143
+  - Quick fix, high impact
+- [ ] **REG-DET-02**: Add 'root' field to repository context (1 SP)
+  - Missing field causes test failures
+  - Location: src/semvx/detection/detector.py:997
+  - Required for CLI compatibility
+
+### P2 - HIGH PRIORITY
+- [ ] **REG-DET-03**: Implement recursive project discovery (3 SP)
+  - Currently missing nested projects (rust-component/, js-frontend/)
+  - Add bounded recursion with ignore rules
+  - Critical for multi-language repos
+- [ ] **QOL-CLI-01**: Remove sys.path hack in CLI (2 SP)
+  - Use proper console-script entry point
+  - Location: src/semvx/cli/main.py:10
+  - Improves packaging and integration
+
+### P3 - MEDIUM PRIORITY
+- [ ] **ARCH-DET-01**: Split detection module into submodules (5 SP)
+  - Split 1,098-line file into: core.py, manifests.py, reports.py
+  - Maintains shared module agreement
+  - Improves maintainability
+- [ ] **PERF-DET-01**: Add caching for manifest reads (3 SP)
+  - Cache detection results
+  - Significant performance improvement
+  - Implement after recursion
+- [ ] **TEST-DET-01**: Add regression tests for nested projects (2 SP)
+  - Test coverage for recursive discovery
+  - Validation for metadata contracts
+  - Push coverage toward 80% target
+
+---
+
 ## 🔧 PHASE 3: Core Module Implementation
 
-### Version Management
-- [ ] **CORE-01**: Implement semantic version parsing (5 SP)
+### Version Management (Updated per Codex guidance)
+- [ ] **CORE-VER-01**: Implement immutable SemanticVersion class (3 SP)
+  - Use @dataclass with functools.total_ordering
+  - Immutable design pattern
+  - Return new instances on operations
+- [ ] **CORE-VER-02**: Add version parsing with validation (2 SP)
   - Parse version strings with validation
   - Support pre-release and build metadata
-  - Version comparison and ordering
-- [ ] **CORE-02**: Create version bump logic (4 SP)
-  - Major, minor, patch increment logic
+  - Raise VersionParseError for invalid input
+- [ ] **CORE-VER-03**: Implement bump operations (2 SP)
+  - Major, minor, patch increment methods
   - Pre-release version handling
-  - Custom version bump patterns
+  - Return new SemanticVersion instances
+- [ ] **CORE-VER-04**: Create composition helpers (2 SP)
+  - SemanticVersionFormatter for custom formatting
+  - SemanticVersionParser for extensibility
+  - Support adapter patterns
 
 ### Git Operations
 - [ ] **CORE-03**: Implement git repository interface (6 SP)
