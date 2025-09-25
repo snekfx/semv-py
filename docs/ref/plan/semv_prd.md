@@ -9,6 +9,12 @@
 
 SEMV (Semantic Version Manager) v2.0.0 has proven successful as a Bash-based tool but has grown to over 4,000 lines in a single monolithic script. The Python rewrite (v3.0.0) addresses critical scalability, maintainability, and performance issues while preserving all existing functionality and enhancing the user experience through Boxy integration.
 
+- Reference Project: `~/repos/code/shell/bashfx/fx-semv` available as `semv -help`
+
+- Publish to Pypi as semv-py installed locally as new `semv`
+
+- Out of scope: support for other lanaguages like Java, C/C++, Go, etc.
+
 ## Current State Analysis
 
 ### Existing SEMV v2.0.0 Capabilities

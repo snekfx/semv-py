@@ -1,5 +1,7 @@
 # SEMV Concepts - Core Patterns and Implementation Philosophy
 
+Reference Project: `~/repos/code/shell/bashfx/fx-semv` available as `semv -help`
+
 **Document Version**: 3.0.0  
 **Target**: Technical implementers and contributors  
 **Scope**: Fundamental concepts, patterns, and design philosophy behind SEMV
