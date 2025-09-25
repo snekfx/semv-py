@@ -1,0 +1,16 @@
+SEMV-PY TASKS SNAPSHOT - 2025-09-25
+
+P1
+- REG-DET-01 (1 SP): Update src/semvx/detection/detector.py:161 so empty/invalid version inputs return "v0.0.0" and re-run tests.
+- REG-DET-02 (1 SP): Restore repository context schema; add repository['root'] and report "directory" for non-git workspaces in src/semvx/detection/detector.py:973/999.
+
+P2
+- CORE-VER-01 (3 SP): Implement immutable @dataclass SemanticVersion with parse/format/bump helpers under src/semvx/core/version.py.
+- REG-DET-03 (3 SP): Add bounded recursive project discovery; surface nested manifests in src/semvx/detection/detector.py:649.
+
+P3
+- QOL-CLI-01 (2 SP): Replace CLI sys.path hack with console-script entry point wiring in src/semvx/cli/main.py:10.
+- ARCH-DET-01 (5 SP): Split detection module into focused submodules (foundations, manifests, reporting) to reduce size and enable targeted imports.
+
+Verification
+- Run `make test` after completing P1 items to confirm regression fixes before proceeding to CORE-VER-01.

@@ -97,11 +97,14 @@
 - ✅ Created CODEX_ANALYSIS.txt and CODEX_REVIEW_SNIPPETS.md
 ### Blocked:
 - 4 failing tests need immediate fixes (REG-DET-01, REG-DET-02, REG-DET-03)
-### Next Agent MUST (Critical Path):
-- **FIX FIRST**: REG-DET-01 (get_highest_version → "v0.0.0")
-- **FIX SECOND**: REG-DET-02 (add 'root' field, fix type="directory")
-- **THEN**: CORE-VER-01 (immutable SemanticVersion with @dataclass)
-- **Note**: Use `make test` to verify fixes
+### Next Agent MUST (Critical Path with precise locations):
+- **FIX FIRST**: REG-DET-01 at src/semvx/detection/detector.py:161
+  - Update get_highest_version to return "v0.0.0" for empty/invalid inputs
+- **FIX SECOND**: REG-DET-02 at src/semvx/detection/detector.py:973/999
+  - Add repository['root'] field to context
+  - Return type="directory" (not "none") for non-git workspaces
+- **VERIFY**: Run `make test` - should fix 4 failing tests
+- **THEN**: CORE-VER-01 (create src/semvx/core/version.py)
 ### Context Hash: Codex guidance integrated, regression fixes prioritized
 ### Files Modified: 4 files (docs + analysis files)
 

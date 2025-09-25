@@ -86,37 +86,42 @@
 
 ### P1 - CRITICAL (Must fix before proceeding)
 - [ ] **REG-DET-01**: Fix get_highest_version to return "v0.0.0" for empty lists (1 SP)
-  - Currently returns None, breaking tests and API contract
-  - Location: src/semvx/detection/detector.py:143
-  - Quick fix, high impact
+  - Update src/semvx/detection/detector.py:161
+  - Currently returns None for empty/invalid inputs, should return "v0.0.0"
+  - Breaking tests and API contract
 - [ ] **REG-DET-02**: Add 'root' field to repository context (1 SP)
-  - Missing field causes test failures
-  - Location: src/semvx/detection/detector.py:997
+  - Restore repository context schema at src/semvx/detection/detector.py:973/999
+  - Add repository['root'] field
+  - Report "directory" (not "none") for non-git workspaces
   - Required for CLI compatibility
 
 ### P2 - HIGH PRIORITY
+- [ ] **CORE-VER-01**: Implement immutable SemanticVersion class (3 SP)
+  - Create src/semvx/core/version.py
+  - Use @dataclass with functools.total_ordering
+  - Implement parse/format/bump helpers
+  - Immutable design pattern per Codex guidance
 - [ ] **REG-DET-03**: Implement recursive project discovery (3 SP)
-  - Currently missing nested projects (rust-component/, js-frontend/)
-  - Add bounded recursion with ignore rules
+  - Add bounded recursive project discovery at src/semvx/detection/detector.py:649
+  - Surface nested manifests (rust-component/, js-frontend/)
   - Critical for multi-language repos
-- [ ] **QOL-CLI-01**: Remove sys.path hack in CLI (2 SP)
-  - Use proper console-script entry point
-  - Location: src/semvx/cli/main.py:10
-  - Improves packaging and integration
 
 ### P3 - MEDIUM PRIORITY
-- [ ] **ARCH-DET-01**: Split detection module into submodules (5 SP)
-  - Split 1,098-line file into: core.py, manifests.py, reports.py
+- [ ] **QOL-CLI-01**: Replace CLI sys.path hack with console-script entry point (2 SP)
+  - Replace sys.path hack at src/semvx/cli/main.py:10
+  - Use proper console-script entry point wiring
+  - Improves packaging and integration compatibility
+- [ ] **ARCH-DET-01**: Split detection module into focused submodules (5 SP)
+  - Split detection module into foundations, manifests, reporting
+  - Reduce size and enable targeted imports
   - Maintains shared module agreement
   - Improves maintainability
-- [ ] **PERF-DET-01**: Add caching for manifest reads (3 SP)
-  - Cache detection results
-  - Significant performance improvement
-  - Implement after recursion
-- [ ] **TEST-DET-01**: Add regression tests for nested projects (2 SP)
-  - Test coverage for recursive discovery
-  - Validation for metadata contracts
-  - Push coverage toward 80% target
+
+### ⚠️ VERIFICATION REQUIREMENT
+**After completing P1 items (REG-DET-01 & REG-DET-02):**
+- Run `make test` to confirm regression fixes
+- Verify 4 failing tests now pass
+- Only proceed to CORE-VER-01 after P1 fixes are verified
 
 ---
 
