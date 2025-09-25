@@ -1,0 +1,28 @@
+name: Quick Check
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  quick-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Run basic tests
+      run: |
+        python tests/run_tests.py
+
+    - name: Test CLI
+      run: |
+        python src/semvx/cli/main.py --version
+        python src/semvx/cli/main.py detect
+        python src/semvx/cli/main.py status
