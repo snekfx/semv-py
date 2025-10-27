@@ -210,3 +210,7 @@ __marimo__/
 *.bak
 *.backup
 *~
+
+# Session tracking and process docs (local only)
+docs/procs/
+docs/misc/
