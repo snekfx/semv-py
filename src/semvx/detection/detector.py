@@ -1,11 +1,13 @@
 """
 Shared Project Detection Library - Core Module
 Version: 1.0.0
-Last Updated: 2025-09-23
+Last Updated: 2025-10-26
 Compatible: SEMV v3.0+, Blade Next v1.0+
 Distribution: Copy into target projects (no dependency)
 
 Zero dependencies - pure Python standard library only.
+
+Note: Foundation functions moved to foundations.py for better organization.
 """
 
 from pathlib import Path
@@ -13,261 +15,19 @@ from typing import List, Dict, Optional, Tuple, Union
 import re
 import json
 import subprocess
-import shutil
 import os
 
+# Import foundation functions
+from .foundations import (
+    normalize_semver,
+    compare_semver,
+    validate_semver_format,
+    get_highest_version,
+    detect_repository_type,
+    check_gitsim_availability,
+    validate_gitsim_environment
+)
 
-# ============================================================================
-# SemVer Utilities (Foundation)
-# ============================================================================
-
-def normalize_semver(version: str) -> str:
-    """
-    Normalize version to vX.Y.Z format for consistent comparison.
-    
-    Handles:
-    - Optional 'v' prefix: "1.2.3" -> "v1.2.3"
-    - Pre-release cleanup: "v1.2.3-alpha.1+meta" -> "v1.2.3"
-    - Malformed versions: "1.2" -> "v1.2.0"
-    
-    Args:
-        version: Raw version string from various sources
-        
-    Returns:
-        Normalized version string in vX.Y.Z format
-        
-    Examples:
-        >>> normalize_semver("1.2.3")
-        "v1.2.3"
-        >>> normalize_semver("v1.2.3-alpha.1")
-        "v1.2.3"
-        >>> normalize_semver("1.2")
-        "v1.2.0"
-    """
-    if not version:
-        return "v0.0.0"
-    
-    # Remove any whitespace
-    version = version.strip()
-    
-    # Add 'v' prefix if missing
-    if not version.startswith('v'):
-        version = f"v{version}"
-    
-    # Extract base version (remove pre-release and build metadata)
-    # Pattern: vX.Y.Z[-pre-release][+build]
-    base_match = re.match(r'v?(\d+)\.(\d+)\.?(\d*)', version)
-    if not base_match:
-        return "v0.0.0"
-    
-    major, minor, patch = base_match.groups()
-    patch = patch or "0"  # Default patch to 0 if missing
-    
-    return f"v{major}.{minor}.{patch}"
-
-
-def compare_semver(version1: str, version2: str) -> int:
-    """
-    Compare semantic versions using standard semver precedence.
-    
-    Args:
-        version1: First version to compare
-        version2: Second version to compare
-        
-    Returns:
-        -1 if version1 < version2
-         0 if version1 == version2
-         1 if version1 > version2
-         
-    Examples:
-        >>> compare_semver("v1.2.3", "v1.2.4")
-        -1
-        >>> compare_semver("v2.0.0", "v1.9.9")
-        1
-        >>> compare_semver("v1.2.3", "v1.2.3")
-        0
-    """
-    # Normalize both versions
-    v1_norm = normalize_semver(version1)
-    v2_norm = normalize_semver(version2)
-    
-    # Extract version components
-    v1_match = re.match(r'v(\d+)\.(\d+)\.(\d+)', v1_norm)
-    v2_match = re.match(r'v(\d+)\.(\d+)\.(\d+)', v2_norm)
-    
-    if not v1_match or not v2_match:
-        # Fallback to string comparison if parsing fails
-        return -1 if v1_norm < v2_norm else (1 if v1_norm > v2_norm else 0)
-    
-    v1_parts = [int(x) for x in v1_match.groups()]
-    v2_parts = [int(x) for x in v2_match.groups()]
-    
-    # Compare major, minor, patch in order
-    for v1_part, v2_part in zip(v1_parts, v2_parts):
-        if v1_part < v2_part:
-            return -1
-        elif v1_part > v2_part:
-            return 1
-    
-    return 0
-
-
-def validate_semver_format(version: str) -> bool:
-    """
-    Validate if a version string follows semantic versioning format.
-    
-    Args:
-        version: Version string to validate
-        
-    Returns:
-        True if valid semver format, False otherwise
-        
-    Examples:
-        >>> validate_semver_format("1.2.3")
-        True
-        >>> validate_semver_format("v1.2.3-alpha.1")
-        True
-        >>> validate_semver_format("1.2")
-        False
-        >>> validate_semver_format("invalid")
-        False
-    """
-    if not version:
-        return False
-    
-    # Allow optional 'v' prefix, require X.Y.Z core, allow pre-release and build
-    pattern = r'^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z\-\.]+))?(?:\+([0-9A-Za-z\-\.]+))?$'
-    return bool(re.match(pattern, version.strip()))
-
-
-def get_highest_version(versions: List[str]) -> str:
-    """
-    Find the highest version from a list using semver comparison.
-
-    Implements "highest version wins" logic for version synchronization.
-
-    Args:
-        versions: List of version strings to compare
-
-    Returns:
-        Highest version string, or "v0.0.0" if list is empty or all invalid
-
-    Examples:
-        >>> get_highest_version(["v1.2.3", "v1.2.4", "v1.1.0"])
-        "v1.2.4"
-        >>> get_highest_version([])
-        "v0.0.0"
-        >>> get_highest_version(["invalid", "bad"])
-        "v0.0.0"
-    """
-    if not versions:
-        return "v0.0.0"
-
-    valid_versions = [v for v in versions if validate_semver_format(v)]
-    if not valid_versions:
-        return "v0.0.0"
-    
-    highest = valid_versions[0]
-    for version in valid_versions[1:]:
-        if compare_semver(version, highest) > 0:
-            highest = version
-    
-    return normalize_semver(highest)
-
-
-# ============================================================================
-# Repository Environment Detection
-# ============================================================================
-
-def detect_repository_type(repo_path: Path) -> str:
-    """
-    Determine repository environment type with GitSim priority.
-    
-    Check for .gitsim before .git to properly identify simulated environments.
-    
-    Args:
-        repo_path: Path to repository directory
-        
-    Returns:
-        "gitsim" if .gitsim directory exists
-        "git" if .git directory exists
-        "directory" if neither exists (plain directory)
-    """
-    repo_path = Path(repo_path).resolve()
-
-    # Check for GitSim first (takes priority over git)
-    if (repo_path / ".gitsim").exists():
-        return "gitsim"
-
-    # Check for standard git repository
-    if (repo_path / ".git").exists():
-        return "git"
-
-    return "directory"
-
-
-def check_gitsim_availability() -> bool:
-    """
-    Check if gitsim command is available in PATH.
-    
-    Returns:
-        True if gitsim command is available, False otherwise
-    """
-    return shutil.which("gitsim") is not None
-
-
-def validate_gitsim_environment(repo_path: Path) -> Dict[str, Union[bool, str, None]]:
-    """
-    Complete GitSim environment validation and metadata extraction.
-    
-    Args:
-        repo_path: Path to repository directory
-        
-    Returns:
-        Dictionary with GitSim status and metadata:
-        {
-            "is_gitsim": bool,
-            "gitsim_available": bool,
-            "status": str,
-            "simulation_info": dict or None
-        }
-    """
-    repo_path = Path(repo_path).resolve()
-    is_gitsim = (repo_path / ".gitsim").exists()
-    gitsim_available = check_gitsim_availability()
-    
-    result = {
-        "is_gitsim": is_gitsim,
-        "gitsim_available": gitsim_available,
-        "status": "not_gitsim",
-        "simulation_info": None
-    }
-    
-    if not is_gitsim:
-        return result
-    
-    if not gitsim_available:
-        result["status"] = "gitsim_unavailable"
-        return result
-    
-    # Extract GitSim simulation metadata if available
-    try:
-        # This would call gitsim-specific commands to get simulation info
-        # For now, we'll return a placeholder structure
-        result["status"] = "gitsim_active"
-        result["simulation_info"] = {
-            "simulation_active": True,
-            "base_branch": "main",  # Would extract from gitsim config
-            "simulated_commits": 0,  # Would count from gitsim status
-            "config_file": str(repo_path / ".gitsim" / "config")
-        }
-    except Exception:
-        result["status"] = "gitsim_error"
-    
-    return result
-
-
-# ============================================================================
 # Manifest File Detection (High Confidence Project Types)
 # ============================================================================
 

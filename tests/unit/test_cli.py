@@ -57,13 +57,26 @@ class TestCLIMain:
             main()
         mock_status.assert_called_once()
 
-    def test_bump_command_stub(self, capsys):
-        """Test bump command shows coming soon message."""
+    @patch('semvx.cli.main.get_repository_context')
+    def test_bump_command(self, mock_get_context, capsys):
+        """Test bump command with version calculation."""
+        mock_context = {
+            'repository': {'type': 'git', 'root': '/test'},
+            'projects': [{
+                'type': 'python',
+                'version': '1.2.3',
+                'version_file': 'pyproject.toml'
+            }],
+            'validation': {}
+        }
+        mock_get_context.return_value = mock_context
+        
         with patch.object(sys, 'argv', ['semvx', 'bump', 'minor']):
             main()
         captured = capsys.readouterr()
-        assert "coming soon" in captured.out.lower()
-        assert "version management" in captured.out.lower()
+        assert "bumping minor version" in captured.out.lower()
+        assert "1.2.3" in captured.out
+        assert "1.3.0" in captured.out
 
 
 class TestDetectionCommand:
@@ -113,52 +126,92 @@ class TestDetectionCommand:
 class TestStatusCommand:
     """Test status command functionality."""
 
-    @patch('semvx.cli.main.get_repository_context')
-    def test_do_status_with_projects(self, mock_get_context, capsys):
-        """Test status display with projects."""
-        mock_context = {
-            'repository': {'type': 'git'},
-            'projects': [
-                {
-                    'type': 'python',
-                    'version': '2.0.0',
-                    'version_file': 'pyproject.toml',
-                    'name': 'test-project'
-                },
-                {
-                    'type': 'rust',
-                    'version': '1.0.0',
-                    'version_file': 'Cargo.toml'
-                }
-            ],
-            'validation': {}
-        }
-        mock_get_context.return_value = mock_context
-
+    @patch('semvx.cli.main.RepositoryAnalyzer')
+    def test_do_status_with_repository(self, mock_analyzer_class, capsys):
+        """Test status display with repository."""
+        from semvx.core.repository_status import RepositoryStatus
+        
+        # Create mock status
+        mock_status = RepositoryStatus(
+            user="testuser",
+            repo_name="test-repo",
+            current_branch="main",
+            main_branch="main",
+            changed_files=5,
+            uncommitted_changes=True,
+            local_build=10,
+            remote_build=8,
+            days_since_last=2,
+            last_commit_msg="test commit",
+            last_tag="v1.0.0",
+            release_tag="v1.0.0",
+            current_version="v1.0.0",
+            next_version="v1.1.0",
+            package_version="1.0.0",
+            pending_actions=["5 changes pending commit"]
+        )
+        
+        # Mock the analyzer
+        mock_analyzer = mock_analyzer_class.return_value
+        mock_analyzer.get_status.return_value = mock_status
+        
+        # Set environment to use plain mode for easier testing
+        import os
+        os.environ["SEMVX_USE_BOXY"] = "false"
+        
         do_status()
         captured = capsys.readouterr()
+        
+        # Clean up
+        os.environ.pop("SEMVX_USE_BOXY", None)
 
-        assert "Version Status" in captured.out
-        assert "PYTHON Project" in captured.out
-        assert "Version:      2.0.0" in captured.out
-        assert "test-project" in captured.out
-        assert "RUST Project" in captured.out
-        assert "Total projects found: 2" in captured.out
+        assert "Repository Status" in captured.out
+        assert "testuser" in captured.out
+        assert "test-repo" in captured.out
+        assert "5 changes pending commit" in captured.out
 
-    @patch('semvx.cli.main.get_repository_context')
-    def test_do_status_no_projects(self, mock_get_context, capsys):
-        """Test status display with no projects."""
-        mock_context = {
-            'repository': {'type': 'directory'},
-            'projects': [],
-            'validation': {}
-        }
-        mock_get_context.return_value = mock_context
-
+    @patch('semvx.cli.main.RepositoryAnalyzer')
+    def test_do_status_data_mode(self, mock_analyzer_class, capsys):
+        """Test status display in data mode (JSON)."""
+        from semvx.core.repository_status import RepositoryStatus
+        import json
+        
+        mock_status = RepositoryStatus(
+            user="testuser",
+            repo_name="test-repo",
+            current_branch="main",
+            main_branch="main",
+            changed_files=0,
+            uncommitted_changes=False,
+            local_build=5,
+            remote_build=5,
+            days_since_last=1,
+            last_commit_msg="test",
+            last_tag="v1.0.0",
+            release_tag="v1.0.0",
+            current_version="v1.0.0",
+            next_version="v1.0.0",
+            package_version="1.0.0",
+            pending_actions=[]
+        )
+        
+        mock_analyzer = mock_analyzer_class.return_value
+        mock_analyzer.get_status.return_value = mock_status
+        
+        # Set data view mode
+        import os
+        os.environ["SEMVX_VIEW"] = "data"
+        
         do_status()
         captured = capsys.readouterr()
-
-        assert "No projects detected" in captured.out
+        
+        # Clean up
+        os.environ.pop("SEMVX_VIEW", None)
+        
+        # Should be valid JSON
+        data = json.loads(captured.out)
+        assert data["user"] == "testuser"
+        assert data["repo_name"] == "test-repo"
 
 
 class TestHelp:

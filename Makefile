@@ -20,8 +20,9 @@ help: ## Show this help message
 	@echo "=========================="
 	@echo ""
 	@echo "Setup & Installation:"
-	@echo "  make install      - Install package in development mode with all dependencies"
+	@echo "  make install      - Install semvx with pipx (globally available)"
 	@echo "  make install-dev  - Install only development dependencies"
+	@echo "  make uninstall    - Uninstall semvx"
 	@echo ""
 	@echo "Testing:"
 	@echo "  make test         - Run all tests with pytest"
@@ -52,8 +53,15 @@ help: ## Show this help message
 
 .PHONY: install
 install: ## Install package in development mode with all dependencies
-	$(PIP) install -e ".[dev]"
-	@echo "✅ Installation complete. Run 'make test' to verify."
+	@echo "Installing semvx with pipx (recommended)..."
+	@if command -v pipx >/dev/null 2>&1; then \
+		pipx install -e . --force; \
+		echo "✅ Installation complete. Run 'semvx --version' to verify."; \
+	else \
+		echo "⚠️  pipx not found. Installing with pip..."; \
+		$(PIP) install -e ".[dev]"; \
+		echo "✅ Installation complete. Run 'make test' to verify."; \
+	fi
 
 .PHONY: install-dev
 install-dev: ## Install only development dependencies
@@ -105,23 +113,36 @@ quality: lint format-check type-check ## Run all quality checks
 
 .PHONY: cli-help
 cli-help: ## Show CLI help
-	$(PYTHON) $(SRC_DIR)/semvx/cli/main.py --help
+	PYTHONPATH=$(SRC_DIR) $(PYTHON) -m semvx.cli.main --help
 
 .PHONY: cli-detect
 cli-detect: ## Run project detection
-	$(PYTHON) $(SRC_DIR)/semvx/cli/main.py detect
+	PYTHONPATH=$(SRC_DIR) $(PYTHON) -m semvx.cli.main detect
 
 .PHONY: cli-status
 cli-status: ## Show project status
-	$(PYTHON) $(SRC_DIR)/semvx/cli/main.py status
+	PYTHONPATH=$(SRC_DIR) $(PYTHON) -m semvx.cli.main status
+
+.PHONY: cli-version
+cli-version: ## Show version details
+	PYTHONPATH=$(SRC_DIR) $(PYTHON) -m semvx.cli.main version
+
+.PHONY: cli-bump
+cli-bump: ## Test bump command (dry-run)
+	@echo "Testing bump commands..."
+	@PYTHONPATH=$(SRC_DIR) $(PYTHON) -m semvx.cli.main bump patch --dry-run
+	@PYTHONPATH=$(SRC_DIR) $(PYTHON) -m semvx.cli.main bump minor --dry-run
+	@PYTHONPATH=$(SRC_DIR) $(PYTHON) -m semvx.cli.main bump major --dry-run
 
 .PHONY: cli-test
 cli-test: ## Test all CLI commands
 	@echo "Testing CLI commands..."
-	@$(PYTHON) $(SRC_DIR)/semvx/cli/main.py --version
-	@$(PYTHON) $(SRC_DIR)/semvx/cli/main.py --help > /dev/null
-	@$(PYTHON) $(SRC_DIR)/semvx/cli/main.py detect
-	@$(PYTHON) $(SRC_DIR)/semvx/cli/main.py status
+	@PYTHONPATH=$(SRC_DIR) $(PYTHON) -m semvx.cli.main --version
+	@PYTHONPATH=$(SRC_DIR) $(PYTHON) -m semvx.cli.main --help > /dev/null
+	@PYTHONPATH=$(SRC_DIR) $(PYTHON) -m semvx.cli.main detect
+	@PYTHONPATH=$(SRC_DIR) $(PYTHON) -m semvx.cli.main status
+	@PYTHONPATH=$(SRC_DIR) $(PYTHON) -m semvx.cli.main version
+	@PYTHONPATH=$(SRC_DIR) $(PYTHON) -m semvx.cli.main bump patch --dry-run > /dev/null
 	@echo "✅ All CLI commands working"
 
 .PHONY: clean
@@ -135,6 +156,16 @@ clean: ## Remove build artifacts and cache
 clean-all: clean ## Remove everything including coverage reports
 	rm -rf $(COVERAGE_DIR)/
 	rm -rf .coverage
+
+.PHONY: uninstall
+uninstall: ## Uninstall semvx
+	@if command -v pipx >/dev/null 2>&1; then \
+		pipx uninstall semvx; \
+		echo "✅ semvx uninstalled"; \
+	else \
+		$(PIP) uninstall -y semvx; \
+		echo "✅ semvx uninstalled"; \
+	fi
 
 .PHONY: dev
 dev: install test-quick ## Install and run basic tests
