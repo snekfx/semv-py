@@ -1,7 +1,6 @@
 """Tests for build_info module."""
 
 import subprocess
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest

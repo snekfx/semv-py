@@ -3,7 +3,6 @@ Type definitions for the detection module.
 """
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 

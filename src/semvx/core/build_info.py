@@ -6,7 +6,7 @@ build information for deployment tracking.
 
 import subprocess
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 
 from .git_ops import GitError
 

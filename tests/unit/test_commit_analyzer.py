@@ -1,9 +1,6 @@
 """Tests for commit analyzer module."""
 
-from pathlib import Path
 from unittest.mock import patch
-
-import pytest
 
 from semvx.core.commit_analyzer import BumpType, CommitAnalyzer
 
@@ -14,7 +11,7 @@ class TestCommitClassification:
     def test_major_prefixes(self, git_repository):
         """Test major version bump prefixes."""
         analyzer = CommitAnalyzer(git_repository)
-        
+
         major_commits = [
             "major: complete rewrite",
             "breaking: remove deprecated API",
@@ -22,14 +19,14 @@ class TestCommitClassification:
             "arch: restructure modules",
             "ux: redesign interface"
         ]
-        
+
         for commit in major_commits:
             assert analyzer._classify_commit(commit) == BumpType.MAJOR
 
     def test_minor_prefixes(self, git_repository):
         """Test minor version bump prefixes."""
         analyzer = CommitAnalyzer(git_repository)
-        
+
         minor_commits = [
             "feat: add new feature",
             "feature: implement auth",
@@ -38,14 +35,14 @@ class TestCommitClassification:
             "ref: refactor module",
             "mrg: merge feature branch"
         ]
-        
+
         for commit in minor_commits:
             assert analyzer._classify_commit(commit) == BumpType.MINOR
 
     def test_patch_prefixes(self, git_repository):
         """Test patch version bump prefixes."""
         analyzer = CommitAnalyzer(git_repository)
-        
+
         patch_commits = [
             "fix: bug in parser",
             "patch: security issue",
@@ -56,7 +53,7 @@ class TestCommitClassification:
             "qol: better error messages",
             "stb: mark as stable"
         ]
-        
+
         for commit in patch_commits:
             assert analyzer._classify_commit(commit) == BumpType.PATCH
 
@@ -68,7 +65,7 @@ class TestCommitClassification:
     def test_ignored_prefixes(self, git_repository):
         """Test ignored commit prefixes."""
         analyzer = CommitAnalyzer(git_repository)
-        
+
         ignored_commits = [
             "doc: update README",
             "admin: update team info",
@@ -76,7 +73,7 @@ class TestCommitClassification:
             "clean: remove old files",
             "x: temporary debug"
         ]
-        
+
         for commit in ignored_commits:
             assert analyzer._classify_commit(commit) == BumpType.NONE
 
@@ -94,10 +91,10 @@ class TestCommitAnalysis:
         """Test analysis recommends major bump."""
         mock_run.return_value.stdout = "breaking: remove API\nfeat: add feature\nfix: bug\n"
         mock_run.return_value.returncode = 0
-        
+
         analyzer = CommitAnalyzer(git_repository)
         analysis = analyzer.analyze_commits_since_tag("v1.0.0")
-        
+
         assert analysis.bump_type == BumpType.MAJOR
         assert len(analysis.major_commits) == 1
         assert len(analysis.minor_commits) == 1
@@ -108,10 +105,10 @@ class TestCommitAnalysis:
         """Test analysis recommends minor bump."""
         mock_run.return_value.stdout = "feat: new feature\nfix: bug fix\ndoc: update docs\n"
         mock_run.return_value.returncode = 0
-        
+
         analyzer = CommitAnalyzer(git_repository)
         analysis = analyzer.analyze_commits_since_tag("v1.0.0")
-        
+
         assert analysis.bump_type == BumpType.MINOR
         assert len(analysis.minor_commits) == 1
         assert len(analysis.patch_commits) == 1
@@ -122,10 +119,10 @@ class TestCommitAnalysis:
         """Test analysis recommends patch bump."""
         mock_run.return_value.stdout = "fix: bug\ndoc: docs\n"
         mock_run.return_value.returncode = 0
-        
+
         analyzer = CommitAnalyzer(git_repository)
         analysis = analyzer.analyze_commits_since_tag("v1.0.0")
-        
+
         assert analysis.bump_type == BumpType.PATCH
         assert len(analysis.patch_commits) == 1
 
@@ -134,10 +131,10 @@ class TestCommitAnalysis:
         """Test getting suggested bump with reasoning."""
         mock_run.return_value.stdout = "feat: feature 1\nfeat: feature 2\nfix: bug\n"
         mock_run.return_value.returncode = 0
-        
+
         analyzer = CommitAnalyzer(git_repository)
         bump_type, reasoning = analyzer.get_suggested_bump("v1.0.0")
-        
+
         assert bump_type == BumpType.MINOR
         assert "2 feature(s)" in reasoning
         assert "1 fix(es)" in reasoning
@@ -145,7 +142,7 @@ class TestCommitAnalysis:
     def test_format_analysis_report(self, git_repository):
         """Test formatting analysis report."""
         from semvx.core.commit_analyzer import CommitAnalysis
-        
+
         analysis = CommitAnalysis(
             bump_type=BumpType.MINOR,
             commit_count=5,
@@ -155,10 +152,10 @@ class TestCommitAnalysis:
             dev_commits=[],
             ignored_commits=["doc: update"]
         )
-        
+
         analyzer = CommitAnalyzer(git_repository)
         report = analyzer.format_analysis_report(analysis)
-        
+
         assert "MINOR" in report
         assert "Features (2)" in report
         assert "Fixes (1)" in report

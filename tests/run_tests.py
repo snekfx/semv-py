@@ -5,7 +5,6 @@ This validates our test structure and basic functionality.
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Add src to path
@@ -20,10 +19,10 @@ def run_basic_tests():
     print("\n1. Testing imports...")
     try:
         from semvx.detection.detector import (
-            normalize_semver,
             compare_semver,
             get_highest_version,
-            get_repository_context
+            get_repository_context,
+            normalize_semver,
         )
         print("   ✅ Detection module imports successful")
     except ImportError as e:
@@ -31,7 +30,7 @@ def run_basic_tests():
         return False
 
     try:
-        from semvx.cli.main import main, do_detection, do_status
+        from semvx.cli.main import main  # noqa: F401
         print("   ✅ CLI module imports successful")
     except ImportError as e:
         print(f"   ❌ Import failed: {e}")

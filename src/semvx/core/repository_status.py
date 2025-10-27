@@ -35,15 +35,15 @@ class RepositoryStatus:
 
 class RepositoryAnalyzer:
     """Analyzes repository state and provides comprehensive status."""
-    
+
     def __init__(self, repo_path: Path):
         self.repo_path = repo_path
         self.git_repo = GitRepository(repo_path)
-    
+
     def get_status(self, fetch_remote: bool = False) -> RepositoryStatus:
         """
         Get comprehensive repository status.
-        
+
         Args:
             fetch_remote: If True, fetch remote data (slow, requires network).
                          Default False for fast local-only status.
@@ -80,7 +80,7 @@ class RepositoryAnalyzer:
             return result.stdout.strip() or "unknown"
         except subprocess.CalledProcessError:
             return "unknown"
-    
+
     def _get_repo_name(self) -> str:
         """Get repository name."""
         try:
@@ -99,12 +99,12 @@ class RepositoryAnalyzer:
         except subprocess.CalledProcessError:
             pass
         return self.repo_path.name
-    
+
     def _get_current_branch(self) -> str:
         """Get current branch name."""
         branch = self.git_repo.get_current_branch()
         return branch or "unknown"
-    
+
     def _get_main_branch(self) -> str:
         """Determine main branch."""
         try:
@@ -123,7 +123,7 @@ class RepositoryAnalyzer:
             return "main"
         except subprocess.CalledProcessError:
             return "main"
-    
+
     def _get_changed_files_count(self) -> int:
         """Get count of changed files."""
         try:
@@ -152,11 +152,11 @@ class RepositoryAnalyzer:
             return int(result.stdout.strip())
         except (subprocess.CalledProcessError, ValueError):
             return None
-    
+
     def _get_remote_build(self, fetch: bool = False) -> Optional[int]:
         """
         Get remote build count.
-        
+
         Args:
             fetch: If True, fetch remote tags first (slow, requires network)
         """
@@ -170,7 +170,7 @@ class RepositoryAnalyzer:
                     check=False,
                     timeout=5  # Add timeout to prevent hanging
                 )
-            
+
             # Try to get remote build count without fetching
             result = subprocess.run(
                 ["git", "rev-list", "--count", "origin/HEAD"],
@@ -185,7 +185,7 @@ class RepositoryAnalyzer:
         except (subprocess.CalledProcessError, ValueError, subprocess.TimeoutExpired):
             pass
         return None
-    
+
     def _get_days_since_last_commit(self) -> int:
         """Get days since last commit."""
         try:
@@ -202,7 +202,7 @@ class RepositoryAnalyzer:
             return delta.days
         except (subprocess.CalledProcessError, ValueError):
             return 0
-    
+
     def _get_last_commit_message(self) -> Optional[str]:
         """Get last commit message."""
         try:
@@ -220,7 +220,7 @@ class RepositoryAnalyzer:
     def _get_last_tag(self) -> Optional[str]:
         """Get last tag."""
         return self.git_repo.get_latest_tag()
-    
+
     def _get_release_tag(self) -> Optional[str]:
         """Get last release tag."""
         tags = self.git_repo.list_tags(pattern="v*")
@@ -236,7 +236,7 @@ class RepositoryAnalyzer:
             release_tags.sort(key=lambda x: x[1], reverse=True)
             return release_tags[0][0]
         return None
-    
+
     def _get_current_version(self) -> Optional[str]:
         """Get current version from git tags."""
         tag = self._get_last_tag()
@@ -247,22 +247,22 @@ class RepositoryAnalyzer:
             except VersionParseError:
                 pass
         return None
-    
+
     def _calculate_next_version(self) -> Optional[str]:
         """Calculate next version based on commit analysis."""
-        from semvx.core.commit_analyzer import CommitAnalyzer, BumpType
-        
+        from semvx.core.commit_analyzer import BumpType, CommitAnalyzer
+
         current = self._get_current_version()
         if not current:
             return "v0.1.0"
-        
+
         try:
             version = SemanticVersion.parse(current)
-            
+
             # Analyze commits to determine bump type
             analyzer = CommitAnalyzer(self.repo_path)
             bump_type, _ = analyzer.get_suggested_bump(current)
-            
+
             # Apply bump based on analysis
             if bump_type == BumpType.MAJOR:
                 next_ver = version.bump_major()
@@ -273,16 +273,16 @@ class RepositoryAnalyzer:
             else:
                 # No version-affecting commits
                 return current
-            
+
             return f"v{next_ver}"
         except VersionParseError:
             return None
-    
+
     def _get_package_version(self) -> Optional[str]:
         """Get version from package files."""
-        import re
         import json
-        
+        import re
+
         # Check pyproject.toml
         pyproject = self.repo_path / "pyproject.toml"
         if pyproject.exists():
@@ -293,7 +293,7 @@ class RepositoryAnalyzer:
                     return match.group(1)
             except Exception:
                 pass
-        
+
         # Check Cargo.toml
         cargo = self.repo_path / "Cargo.toml"
         if cargo.exists():
@@ -304,7 +304,7 @@ class RepositoryAnalyzer:
                     return match.group(1)
             except Exception:
                 pass
-        
+
         # Check package.json
         package = self.repo_path / "package.json"
         if package.exists():
@@ -314,7 +314,7 @@ class RepositoryAnalyzer:
             except Exception:
                 pass
         return None
-    
+
     def _analyze_pending_actions(self) -> List[str]:
         """Analyze pending actions."""
         actions = []

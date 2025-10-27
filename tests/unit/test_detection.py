@@ -2,21 +2,18 @@
 Unit tests for the detection module.
 """
 
-import pytest
-from pathlib import Path
-import sys
 import os
+import sys
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
 
 from semvx.detection.detector import (
+    compare_semver,
+    detect_projects,
+    get_highest_version,
     get_repository_context,
     normalize_semver,
-    compare_semver,
-    get_highest_version,
-    detect_projects,
-    detect_repository_type
 )
 
 
@@ -106,7 +103,7 @@ class TestRepositoryContext:
         # Subdirectory scanning is a future enhancement
         project_types = [p["type"] for p in context["projects"]]
         assert "python" in project_types
-        
+
         # Verify python project has correct version
         python_projects = [p for p in context["projects"] if p["type"] == "python"]
         assert len(python_projects) > 0

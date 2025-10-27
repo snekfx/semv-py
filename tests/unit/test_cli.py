@@ -2,16 +2,16 @@
 Unit tests for the CLI module.
 """
 
-import pytest
-import sys
 import os
-from unittest.mock import patch, MagicMock
-from io import StringIO
+import sys
+from unittest.mock import patch
+
+import pytest
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
 
-from semvx.cli.main import main, print_help, do_detection, do_status
+from semvx.cli.main import do_detection, do_status, main, print_help
 
 
 class TestCLIMain:
@@ -70,7 +70,7 @@ class TestCLIMain:
             'validation': {}
         }
         mock_get_context.return_value = mock_context
-        
+
         with patch.object(sys, 'argv', ['semvx', 'bump', 'minor']):
             main()
         captured = capsys.readouterr()
@@ -130,7 +130,7 @@ class TestStatusCommand:
     def test_do_status_with_repository(self, mock_analyzer_class, capsys):
         """Test status display with repository."""
         from semvx.core.repository_status import RepositoryStatus
-        
+
         # Create mock status
         mock_status = RepositoryStatus(
             user="testuser",
@@ -150,18 +150,18 @@ class TestStatusCommand:
             package_version="1.0.0",
             pending_actions=["5 changes pending commit"]
         )
-        
+
         # Mock the analyzer
         mock_analyzer = mock_analyzer_class.return_value
         mock_analyzer.get_status.return_value = mock_status
-        
+
         # Set environment to use plain mode for easier testing
         import os
         os.environ["SEMVX_USE_BOXY"] = "false"
-        
+
         do_status()
         captured = capsys.readouterr()
-        
+
         # Clean up
         os.environ.pop("SEMVX_USE_BOXY", None)
 
@@ -173,9 +173,10 @@ class TestStatusCommand:
     @patch('semvx.cli.main.RepositoryAnalyzer')
     def test_do_status_data_mode(self, mock_analyzer_class, capsys):
         """Test status display in data mode (JSON)."""
-        from semvx.core.repository_status import RepositoryStatus
         import json
-        
+
+        from semvx.core.repository_status import RepositoryStatus
+
         mock_status = RepositoryStatus(
             user="testuser",
             repo_name="test-repo",
@@ -194,20 +195,20 @@ class TestStatusCommand:
             package_version="1.0.0",
             pending_actions=[]
         )
-        
+
         mock_analyzer = mock_analyzer_class.return_value
         mock_analyzer.get_status.return_value = mock_status
-        
+
         # Set data view mode
         import os
         os.environ["SEMVX_VIEW"] = "data"
-        
+
         do_status()
         captured = capsys.readouterr()
-        
+
         # Clean up
         os.environ.pop("SEMVX_VIEW", None)
-        
+
         # Should be valid JSON
         data = json.loads(captured.out)
         assert data["user"] == "testuser"

@@ -7,7 +7,7 @@ repository status analysis.
 """
 
 from .build_info import BuildInfo
-from .commit_analyzer import BumpType, CommitAnalyzer, CommitAnalysis
+from .commit_analyzer import BumpType, CommitAnalysis, CommitAnalyzer
 from .file_writer import FileWriteError, VersionFileWriter
 from .git_ops import GitError, GitRepository, GitVersionTagger
 from .repository_status import RepositoryAnalyzer, RepositoryStatus

@@ -5,31 +5,24 @@ Main entry point for the semvx command.
 """
 
 import os
-import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
 
-from semvx.detection.detector import get_repository_context
 from semvx.core.build_info import BuildInfo
-from semvx.core.version import SemanticVersion, VersionParseError
-from semvx.core.file_writer import VersionFileWriter, FileWriteError
-from semvx.core.git_ops import GitRepository, GitVersionTagger, GitError
+from semvx.core.commit_analyzer import CommitAnalyzer
+from semvx.core.file_writer import FileWriteError, VersionFileWriter
+from semvx.core.git_ops import GitError, GitRepository, GitVersionTagger
 from semvx.core.repository_status import RepositoryAnalyzer
-from semvx.core.commit_analyzer import CommitAnalyzer, BumpType
+from semvx.core.version import SemanticVersion, VersionParseError
+from semvx.detection.detector import get_repository_context
 from semvx.integrations.boxy import (
-    format_status_for_boxy,
     format_status_as_data,
+    format_status_for_boxy,
     render_with_boxy,
-    should_use_boxy
+    should_use_boxy,
 )
-from semvx.integrations.rolo import (
-    format_as_table,
-    format_as_list,
-    is_rolo_available
-)
+from semvx.integrations.rolo import format_as_table, is_rolo_available
 
 
 def main():
@@ -37,17 +30,17 @@ def main():
     # Parse global flags
     view_mode = None
     args = []
-    
+
     for arg in sys.argv[1:]:
         if arg.startswith("--view="):
             view_mode = arg.split("=", 1)[1]
             os.environ["SEMVX_VIEW"] = view_mode
         else:
             args.append(arg)
-    
+
     # Reconstruct argv without global flags
     sys.argv = [sys.argv[0]] + args
-    
+
     if len(sys.argv) > 1 and sys.argv[1] in ["--version", "-v"]:
         print("semvx 3.0.0-dev (Python rewrite)")
         return
@@ -77,55 +70,55 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1] == "tag":
         do_tag_command()
         return
-    
+
     if len(sys.argv) > 1 and sys.argv[1] == "tags":
         do_tags_list_command()
         return
-    
+
     if len(sys.argv) > 1 and sys.argv[1] in ["next", "dry"]:
         do_next_command()
         return
-    
+
     if len(sys.argv) > 1 and sys.argv[1] == "get":
         do_get_command()
         return
-    
+
     if len(sys.argv) > 1 and sys.argv[1] == "set":
         do_set_command()
         return
-    
+
     if len(sys.argv) > 1 and sys.argv[1] == "sync":
         do_sync_command()
         return
-    
+
     if len(sys.argv) > 1 and sys.argv[1] in ["bc", "build-count"]:
         do_build_count_command()
         return
-    
+
     if len(sys.argv) > 1 and sys.argv[1] == "build":
         do_build_command()
         return
-    
+
     if len(sys.argv) > 1 and sys.argv[1] == "fetch":
         do_fetch_command()
         return
-    
+
     if len(sys.argv) > 1 and sys.argv[1] == "remote":
         do_remote_command()
         return
-    
+
     if len(sys.argv) > 1 and sys.argv[1] in ["upst", "upstream"]:
         do_upstream_command()
         return
-    
+
     if len(sys.argv) > 1 and sys.argv[1] == "validate":
         do_validate_command()
         return
-    
+
     if len(sys.argv) > 1 and sys.argv[1] == "audit":
         do_audit_command()
         return
-    
+
     if len(sys.argv) > 1 and sys.argv[1] == "pre-commit":
         do_precommit_command()
         return
@@ -239,7 +232,7 @@ def do_status():
     """Show comprehensive repository status (dashboard view)."""
     try:
         repo_path = Path.cwd()
-        
+
         # Check if it's a git repository
         try:
             analyzer = RepositoryAnalyzer(repo_path)
@@ -247,7 +240,7 @@ def do_status():
         except GitError:
             print("❌ Not a git repository")
             sys.exit(1)
-        
+
         # Convert status to dictionary for formatting
         status_data = {
             "user": status.user,
@@ -266,10 +259,10 @@ def do_status():
             "package_version": status.package_version,
             "pending_actions": status.pending_actions
         }
-        
+
         # Check view mode
         view_mode = os.environ.get("SEMVX_VIEW", "normal")
-        
+
         if view_mode == "data":
             # Machine-readable output for AI agents
             print(format_status_as_data(status_data))
@@ -295,7 +288,7 @@ def do_bump_command():
     # Parse arguments
     bump_type = "patch"  # default
     dry_run = False
-    
+
     for arg in sys.argv[2:]:
         if arg in ["major", "minor", "patch"]:
             bump_type = arg
@@ -304,27 +297,27 @@ def do_bump_command():
         elif arg in ["--help", "-h"]:
             print_bump_help()
             return
-    
+
     try:
         repo_path = Path.cwd()
         context = get_repository_context(repo_path)
-        
+
         if not context['projects']:
             print("❌ No projects detected in current directory.")
             print("Run 'semvx detect' to see what can be detected.")
             sys.exit(1)
-        
+
         print(f"🔧 Bumping {bump_type} version{' (DRY RUN)' if dry_run else ''}...")
         print("=" * 60)
-        
+
         for project in context['projects']:
             proj_type = project['type']
             current_version = project.get('version', 'v0.0.0')
-            
+
             try:
                 # Parse current version
                 sem_ver = SemanticVersion.parse(current_version)
-                
+
                 # Bump version
                 if bump_type == "major":
                     new_ver = sem_ver.bump_major()
@@ -332,15 +325,15 @@ def do_bump_command():
                     new_ver = sem_ver.bump_minor()
                 else:  # patch
                     new_ver = sem_ver.bump_patch()
-                
+
                 # Display change
                 print(f"\n📦 {proj_type.upper()} Project:")
                 print(f"   Current:  {sem_ver}")
                 print(f"   New:      {new_ver}")
-                
+
                 version_file = project.get('version_file', 'N/A')
                 print(f"   File:     {version_file}")
-                
+
                 if not dry_run:
                     # Actually write the file
                     try:
@@ -355,19 +348,19 @@ def do_bump_command():
                     except FileWriteError as fe:
                         print(f"   Status:   ❌ Error: {fe}")
                 else:
-                    print(f"   Status:   ✅ Dry run - no changes made")
-                    
+                    print("   Status:   ✅ Dry run - no changes made")
+
             except VersionParseError as e:
                 print(f"\n❌ {proj_type.upper()}: Failed to parse version '{current_version}'")
                 print(f"   Error: {e}")
-        
+
         print("\n" + "=" * 60)
         if dry_run:
             print("✅ Dry run complete - no files were modified")
         else:
             print("✅ Version bump complete!")
             print("💡 Tip: Use --dry-run to preview changes before applying")
-            
+
     except Exception as e:
         print(f"❌ Error during version bump: {e}", file=sys.stderr)
         sys.exit(1)
@@ -404,23 +397,23 @@ def do_version_command():
     try:
         repo_path = Path.cwd()
         context = get_repository_context(repo_path)
-        
+
         if not context['projects']:
             print("No projects detected in current directory.")
             return
-        
+
         print("📋 Project Versions")
         print("=" * 60)
-        
+
         for project in context['projects']:
             proj_type = project['type']
             version = project.get('version', 'N/A')
             version_file = project.get('version_file', 'N/A')
-            
+
             print(f"\n{proj_type.upper()}:")
             print(f"  Version: {version}")
             print(f"  File:    {version_file}")
-            
+
             # Try to parse and show details
             if version != 'N/A':
                 try:
@@ -431,10 +424,10 @@ def do_version_command():
                     if sem_ver.build_metadata:
                         print(f"  Build: {sem_ver.build_metadata}")
                 except VersionParseError:
-                    print(f"  ⚠️  Invalid semantic version format")
-        
+                    print("  ⚠️  Invalid semantic version format")
+
         print("\n" + "=" * 60)
-        
+
     except Exception as e:
         print(f"Error getting version info: {e}", file=sys.stderr)
         sys.exit(1)
@@ -445,7 +438,7 @@ def do_tag_command():
     # Parse arguments
     force = False
     tag_version = None
-    
+
     for arg in sys.argv[2:]:
         if arg in ["--force", "-f"]:
             force = True
@@ -454,10 +447,10 @@ def do_tag_command():
             return
         elif not arg.startswith("-"):
             tag_version = arg
-    
+
     try:
         repo_path = Path.cwd()
-        
+
         # Initialize git repository
         try:
             git_repo = GitRepository(repo_path)
@@ -465,14 +458,14 @@ def do_tag_command():
             print(f"❌ Not a git repository: {repo_path}")
             print(f"   Error: {e}")
             sys.exit(1)
-        
+
         # Get project context
         context = get_repository_context(repo_path)
-        
+
         if not context['projects']:
             print("❌ No projects detected in current directory.")
             sys.exit(1)
-        
+
         # Determine version to tag
         if tag_version:
             # User specified version
@@ -491,10 +484,10 @@ def do_tag_command():
             except VersionParseError:
                 print(f"❌ Cannot parse current version: {current_version}")
                 sys.exit(1)
-        
+
         # Create the tag
         print(f"🏷️  Creating git tag for version {version}...")
-        
+
         success, message = GitVersionTagger.create_version_tag(
             git_repo,
             version,
@@ -502,7 +495,7 @@ def do_tag_command():
             message=f"Release {version}",
             force=force
         )
-        
+
         if success:
             print(f"✅ {message}")
             print(f"   Tag: v{version}")
@@ -512,7 +505,7 @@ def do_tag_command():
             if "already exists" in message and not force:
                 print("   💡 Use --force to overwrite existing tag")
             sys.exit(1)
-            
+
     except Exception as e:
         print(f"❌ Error creating tag: {e}", file=sys.stderr)
         sys.exit(1)
@@ -546,18 +539,18 @@ def do_tags_list_command():
     """List all version tags in the repository."""
     try:
         repo_path = Path.cwd()
-        
+
         try:
             git_repo = GitRepository(repo_path)
         except GitError:
             print("❌ Not a git repository")
             sys.exit(1)
-        
+
         print("🏷️  Version Tags")
         print("=" * 60)
-        
+
         version_tags = GitVersionTagger.get_version_tags(git_repo)
-        
+
         if not version_tags:
             print("No version tags found.")
             print("\n💡 Create a tag with: semvx tag")
@@ -565,9 +558,9 @@ def do_tags_list_command():
             for tag in sorted(version_tags, reverse=True):
                 print(f"  {tag}")
             print(f"\nTotal: {len(version_tags)} version tag(s)")
-        
+
         print("=" * 60)
-        
+
     except Exception as e:
         print(f"❌ Error listing tags: {e}", file=sys.stderr)
         sys.exit(1)
@@ -577,24 +570,24 @@ def do_build_count_command():
     """Show current build count (total commits)."""
     try:
         repo_path = Path.cwd()
-        
+
         # Initialize git repository
         try:
             git_repo = GitRepository(repo_path)
         except GitError:
             print("❌ Not a git repository")
             sys.exit(1)
-        
+
         try:
             # Get build count and commit info
             build_count = BuildInfo.get_build_count(repo_path)
             commit_hash = BuildInfo.get_commit_hash(repo_path, short=True)
-            
+
             print("🔧 Build Information")
             print("=" * 60)
             print(f"Build Count: {build_count}")
             print(f"Commit:      {commit_hash}")
-            
+
             # Show build count since last tag if available
             latest_tag = git_repo.get_latest_tag()
             if latest_tag:
@@ -603,13 +596,13 @@ def do_build_count_command():
                     print(f"Since {latest_tag}: {count_since_tag} commit(s)")
                 except GitError:
                     pass
-            
+
             print("=" * 60)
-            
+
         except GitError as e:
             print(f"❌ Error getting build count: {e}")
             sys.exit(1)
-            
+
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -619,59 +612,59 @@ def do_build_command():
     """Generate build information file."""
     try:
         repo_path = Path.cwd()
-        
+
         # Initialize git repository
         try:
             git_repo = GitRepository(repo_path)
         except GitError:
             print("❌ Not a git repository")
             sys.exit(1)
-        
+
         # Get output filename
         output_file = ".build_info"
         if len(sys.argv) > 2:
             output_file = sys.argv[2]
-        
+
         # Get current version from repository context
         context = get_repository_context(repo_path)
         version = "unknown"
-        
+
         # Try to get version from projects or git tags
         if context['projects']:
             # Use first project version
             version = context['projects'][0].get('version', 'unknown')
-        
+
         if version == "unknown" or version == "N/A":
             # Fall back to git tag
             latest_tag = git_repo.get_latest_tag()
             if latest_tag:
                 version = latest_tag
-        
+
         try:
             # Generate build file
             output_path = BuildInfo.generate_build_file(
                 repo_path, version=version, output_file=output_file
             )
-            
+
             print("🔧 Build File Generated")
             print("=" * 60)
             print(f"File:    {output_path}")
             print(f"Version: {version}")
-            
+
             # Show build count
             build_count = BuildInfo.get_build_count(repo_path)
             commit_hash = BuildInfo.get_commit_hash(repo_path, short=True)
             print(f"Build:   {build_count}")
             print(f"Commit:  {commit_hash}")
             print("=" * 60)
-            
+
         except GitError as e:
             print(f"❌ Error generating build file: {e}")
             sys.exit(1)
-        except IOError as e:
+        except OSError as e:
             print(f"❌ Error writing build file: {e}")
             sys.exit(1)
-            
+
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -681,29 +674,29 @@ def do_fetch_command():
     """Fetch remote tags."""
     try:
         repo_path = Path.cwd()
-        
+
         # Initialize git repository
         try:
             git_repo = GitRepository(repo_path)
         except GitError:
             print("❌ Not a git repository")
             sys.exit(1)
-        
+
         # Check if remote exists
         if not git_repo.has_remote():
             print("❌ No remote repository configured")
             sys.exit(1)
-        
+
         # Fetch tags
         print("🔄 Fetching remote tags...")
         success, message = git_repo.fetch_tags()
-        
+
         if success:
             print(f"✅ {message}")
         else:
             print(f"❌ {message}")
             sys.exit(1)
-            
+
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -713,35 +706,35 @@ def do_remote_command():
     """Show latest remote semver tag."""
     try:
         repo_path = Path.cwd()
-        
+
         # Initialize git repository
         try:
             git_repo = GitRepository(repo_path)
         except GitError:
             print("❌ Not a git repository")
             sys.exit(1)
-        
+
         # Check if remote exists
         if not git_repo.has_remote():
             print("❌ No remote repository configured")
             sys.exit(1)
-        
+
         try:
             remote_tag = git_repo.get_remote_latest_tag()
-            
+
             print("🌐 Remote Version Information")
             print("=" * 60)
-            
+
             if remote_tag:
                 print(f"Latest Remote Tag: {remote_tag}")
-                
+
                 # Compare with local
                 local_tag = git_repo.get_latest_tag()
                 if local_tag:
                     print(f"Latest Local Tag:  {local_tag}")
-                    
+
                     status, message = git_repo.compare_with_remote(local_tag, remote_tag)
-                    
+
                     if status == "ahead":
                         print(f"\n✅ {message}")
                     elif status == "behind":
@@ -752,17 +745,17 @@ def do_remote_command():
                         print(f"\n❓ {message}")
                 else:
                     print("Latest Local Tag:  (none)")
-                    print(f"\n⚠️  No local tags found")
+                    print("\n⚠️  No local tags found")
             else:
                 print("Latest Remote Tag: (none)")
                 print("\n❓ No remote tags found")
-            
+
             print("=" * 60)
-            
+
         except GitError as e:
             print(f"❌ Error getting remote tags: {e}")
             sys.exit(1)
-            
+
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -772,29 +765,29 @@ def do_upstream_command():
     """Compare local vs remote semver."""
     try:
         repo_path = Path.cwd()
-        
+
         # Initialize git repository
         try:
             git_repo = GitRepository(repo_path)
         except GitError:
             print("❌ Not a git repository")
             sys.exit(1)
-        
+
         # Check if remote exists
         if not git_repo.has_remote():
             print("❌ No remote repository configured")
             sys.exit(1)
-        
+
         try:
             local_tag = git_repo.get_latest_tag()
             remote_tag = git_repo.get_remote_latest_tag()
-            
+
             print("🔄 Upstream Comparison")
             print("=" * 60)
             print(f"Local:  {local_tag if local_tag else '(none)'}")
             print(f"Remote: {remote_tag if remote_tag else '(none)'}")
             print("=" * 60)
-            
+
             if not local_tag and not remote_tag:
                 print("❓ No tags found locally or remotely")
             elif not local_tag:
@@ -803,7 +796,7 @@ def do_upstream_command():
                 print("✅ No remote tags - local is ahead")
             else:
                 status, message = git_repo.compare_with_remote(local_tag, remote_tag)
-                
+
                 if status == "ahead":
                     print(f"✅ {message}")
                     print("\n💡 You can push your tags with: git push --tags")
@@ -814,11 +807,11 @@ def do_upstream_command():
                     print(f"✅ {message}")
                 else:
                     print(f"❓ {message}")
-            
+
         except GitError as e:
             print(f"❌ Error comparing with remote: {e}")
             sys.exit(1)
-            
+
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -829,26 +822,26 @@ def do_validate_command():
     try:
         repo_path = Path.cwd()
         context = get_repository_context(repo_path)
-        
+
         print("🔍 Version Validation")
         print("=" * 60)
-        
+
         if not context['projects']:
             print("❌ No projects detected")
             sys.exit(1)
-        
+
         # Collect all versions
         versions = {}
         for project in context['projects']:
             proj_type = project['type']
             version = project.get('version', 'N/A')
             version_file = project.get('version_file', 'N/A')
-            
+
             if version != 'N/A':
                 if version not in versions:
                     versions[version] = []
                 versions[version].append((proj_type, version_file))
-        
+
         # Check git tag
         try:
             git_repo = GitRepository(repo_path)
@@ -859,7 +852,7 @@ def do_validate_command():
                     versions[latest_tag] = [('git', 'tags')]
         except GitError:
             latest_tag = None
-        
+
         # Report findings
         if len(versions) == 0:
             print("\n❌ No versions found")
@@ -878,9 +871,9 @@ def do_validate_command():
                     print(f"    - {proj_type}: {file}")
             print("\n💡 Run 'semvx sync' to synchronize versions")
             sys.exit(1)
-        
+
         print("=" * 60)
-        
+
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -890,25 +883,25 @@ def do_audit_command():
     """Comprehensive repository and version audit."""
     try:
         repo_path = Path.cwd()
-        
+
         print("📊 Repository Audit")
         print("=" * 60)
-        
+
         # Git repository info
         git_data = []
         try:
             git_repo = GitRepository(repo_path)
-            
+
             branch = git_repo.get_current_branch()
             latest_tag = git_repo.get_latest_tag() or "(none)"
             build_count = BuildInfo.get_build_count(repo_path)
             commit_hash = BuildInfo.get_commit_hash(repo_path, short=True)
-            
+
             git_data.append(["Branch", branch])
             git_data.append(["Latest Tag", latest_tag])
             git_data.append(["Build Count", str(build_count)])
             git_data.append(["Commit", commit_hash])
-            
+
             # Remote info
             if git_repo.has_remote():
                 try:
@@ -922,14 +915,14 @@ def do_audit_command():
                     git_data.append(["Remote Tag", "(error fetching)"])
             else:
                 git_data.append(["Remote", "(none configured)"])
-                
+
         except GitError as e:
             print(f"\n⚠️  Not a git repository: {e}")
             git_data = []
-        
+
         # Display git info as table
         if git_data:
-            print(f"\n🌿 Git Information:")
+            print("\n🌿 Git Information:")
             if is_rolo_available():
                 table = format_as_table(git_data, border="none", align="left,left")
                 # Indent the table
@@ -937,12 +930,12 @@ def do_audit_command():
             else:
                 for key, value in git_data:
                     print(f"  {key}: {value}")
-        
+
         # Project detection
         context = get_repository_context(repo_path)
-        
+
         print(f"\n📦 Projects Detected: {len(context['projects'])}")
-        
+
         if context['projects'] and is_rolo_available():
             # Format projects as table
             project_data = []
@@ -951,7 +944,7 @@ def do_audit_command():
                 version = project.get('version', 'N/A')
                 version_file = project.get('version_file', 'N/A')
                 project_data.append([proj_type, version, version_file])
-            
+
             table = format_as_table(
                 project_data,
                 headers=["Type", "Version", "File"],
@@ -965,40 +958,40 @@ def do_audit_command():
                 proj_type = project['type']
                 version = project.get('version', 'N/A')
                 version_file = project.get('version_file', 'N/A')
-                
+
                 print(f"\n  {proj_type.upper()}:")
                 print(f"    Version: {version}")
                 print(f"    File: {version_file}")
-        
+
         # Version consistency check
         versions = set()
         for project in context['projects']:
             version = project.get('version')
             if version and version != 'N/A':
                 versions.add(version)
-        
-        print(f"\n🔍 Version Analysis:")
+
+        print("\n🔍 Version Analysis:")
         if len(versions) == 0:
-            print(f"  Status: ⚠️  No versions found")
+            print("  Status: ⚠️  No versions found")
         elif len(versions) == 1:
             print(f"  Status: ✅ Consistent ({list(versions)[0]})")
         else:
             print(f"  Status: ⚠️  Drift detected ({len(versions)} different versions)")
-        
+
         # Commit analysis
         try:
             if latest_tag and latest_tag != "(none)":
                 analyzer = CommitAnalyzer(repo_path)
                 bump_type, reasoning = analyzer.get_suggested_bump(latest_tag)
-                
-                print(f"\n📋 Commit Analysis:")
+
+                print("\n📋 Commit Analysis:")
                 print(f"  Suggested Bump: {bump_type.value.upper()}")
                 print(f"  Reason: {reasoning}")
         except Exception:
             pass
-        
+
         print("\n" + "=" * 60)
-        
+
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -1008,13 +1001,13 @@ def do_precommit_command():
     """Pre-commit validation checks."""
     try:
         repo_path = Path.cwd()
-        
+
         print("🔒 Pre-Commit Validation")
         print("=" * 60)
-        
+
         issues = []
         warnings = []
-        
+
         # Check 1: Git repository
         try:
             git_repo = GitRepository(repo_path)
@@ -1023,10 +1016,10 @@ def do_precommit_command():
             print("\n❌ Not a git repository")
             print("=" * 60)
             sys.exit(1)
-        
+
         # Check 2: Version consistency
         context = get_repository_context(repo_path)
-        
+
         if not context['projects']:
             warnings.append("No projects detected")
         else:
@@ -1035,12 +1028,12 @@ def do_precommit_command():
                 version = project.get('version')
                 if version and version != 'N/A':
                     versions.add(version)
-            
+
             if len(versions) > 1:
                 issues.append(f"Version drift: {len(versions)} different versions found")
             elif len(versions) == 1:
                 print(f"\n✅ Version consistency: {list(versions)[0]}")
-        
+
         # Check 3: Git tag vs project version
         latest_tag = git_repo.get_latest_tag()
         if latest_tag and context['projects']:
@@ -1050,7 +1043,7 @@ def do_precommit_command():
                 try:
                     tag_ver = SemanticVersion.parse(latest_tag)
                     proj_ver = SemanticVersion.parse(project_version)
-                    
+
                     if proj_ver > tag_ver:
                         print(f"✅ Project version ahead of tag: {project_version} > {latest_tag}")
                     elif proj_ver == tag_ver:
@@ -1059,7 +1052,7 @@ def do_precommit_command():
                         warnings.append(f"Project version behind tag: {project_version} < {latest_tag}")
                 except VersionParseError:
                     warnings.append(f"Version mismatch: project={project_version}, tag={latest_tag}")
-        
+
         # Check 4: Uncommitted changes (optional warning)
         try:
             result = subprocess.run(
@@ -1074,10 +1067,10 @@ def do_precommit_command():
                 print(f"\n📝 Uncommitted changes: {changes} file(s)")
         except subprocess.CalledProcessError:
             pass
-        
+
         # Summary
         print("\n" + "=" * 60)
-        
+
         if issues:
             print(f"\n❌ {len(issues)} issue(s) found:")
             for issue in issues:
@@ -1091,7 +1084,7 @@ def do_precommit_command():
             print("\n✅ Pre-commit checks passed (with warnings)")
         else:
             print("\n✅ All pre-commit checks passed!")
-        
+
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         sys.exit(1)

@@ -7,7 +7,7 @@ structured text layout and formatting.
 
 import shutil
 import subprocess
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 
 def is_rolo_available() -> bool:
@@ -23,20 +23,20 @@ def format_as_table(
 ) -> str:
     """
     Format data as a table using rolo.
-    
+
     Args:
         data: List of rows, each row is a list of cell values
         headers: Optional header row
         border: Border style (none, ascii, unicode)
         align: Column alignment (e.g., "left,right,center")
-        
+
     Returns:
         Formatted table string
     """
     if not is_rolo_available():
         # Fallback to simple formatting
         return _format_table_fallback(data, headers)
-    
+
     try:
         # Prepare input data
         rows = []
@@ -44,14 +44,14 @@ def format_as_table(
             rows.append("\t".join(headers))
         for row in data:
             rows.append("\t".join(str(cell) for cell in row))
-        
+
         input_data = "\n".join(rows)
-        
+
         # Build rolo command
         cmd = ["rolo", "table", "--delim=\t", f"--border={border}"]
         if align:
             cmd.append(f"--align={align}")
-        
+
         # Run rolo
         result = subprocess.run(
             cmd,
@@ -60,9 +60,9 @@ def format_as_table(
             text=True,
             check=True,
         )
-        
+
         return result.stdout.strip()
-        
+
     except (subprocess.CalledProcessError, FileNotFoundError):
         return _format_table_fallback(data, headers)
 
@@ -74,27 +74,27 @@ def format_as_list(
 ) -> str:
     """
     Format items as a list using rolo.
-    
+
     Args:
         items: List of items to format
         style: List style (bullets, stars, numbers, dash, dots)
         line_numbers: Whether to add line numbers
-        
+
     Returns:
         Formatted list string
     """
     if not is_rolo_available():
         # Fallback to simple formatting
         return _format_list_fallback(items, style)
-    
+
     try:
         input_data = "\n".join(items)
-        
+
         # Build rolo command
         cmd = ["rolo", "list", f"--list-style={style}"]
         if line_numbers:
             cmd.append("--line-numbers")
-        
+
         # Run rolo
         result = subprocess.run(
             cmd,
@@ -103,9 +103,9 @@ def format_as_list(
             text=True,
             check=True,
         )
-        
+
         return result.stdout.strip()
-        
+
     except (subprocess.CalledProcessError, FileNotFoundError):
         return _format_list_fallback(items, style)
 
@@ -117,25 +117,25 @@ def format_as_columns(
 ) -> str:
     """
     Format items as columns using rolo.
-    
+
     Args:
         items: List of items to format
         cols: Number of columns
         fill: Fill direction (row or column)
-        
+
     Returns:
         Formatted columns string
     """
     if not is_rolo_available():
         # Fallback to simple formatting
         return _format_columns_fallback(items, cols)
-    
+
     try:
         input_data = " ".join(items)
-        
+
         # Build rolo command
         cmd = ["rolo", "columns", f"--cols={cols}", f"--fill={fill}"]
-        
+
         # Run rolo
         result = subprocess.run(
             cmd,
@@ -144,9 +144,9 @@ def format_as_columns(
             text=True,
             check=True,
         )
-        
+
         return result.stdout.strip()
-        
+
     except (subprocess.CalledProcessError, FileNotFoundError):
         return _format_columns_fallback(items, cols)
 
@@ -156,7 +156,7 @@ def _format_table_fallback(
 ) -> str:
     """Fallback table formatting without rolo."""
     lines = []
-    
+
     # Calculate column widths
     all_rows = [headers] + data if headers else data
     col_widths = []
@@ -165,7 +165,7 @@ def _format_table_fallback(
         for col_idx in range(num_cols):
             max_width = max(len(str(row[col_idx])) for row in all_rows if col_idx < len(row))
             col_widths.append(max_width)
-    
+
     # Format rows
     if headers:
         header_line = "  ".join(
@@ -173,13 +173,13 @@ def _format_table_fallback(
         )
         lines.append(header_line)
         lines.append("-" * len(header_line))
-    
+
     for row in data:
         row_line = "  ".join(
             str(cell).ljust(width) for cell, width in zip(row, col_widths)
         )
         lines.append(row_line)
-    
+
     return "\n".join(lines)
 
 
@@ -197,7 +197,7 @@ def _format_list_fallback(items: List[str], style: str = "bullets") -> str:
         prefix = "· "
     else:
         prefix = "• "
-    
+
     return "\n".join(f"{prefix}{item}" for item in items)
 
 
