@@ -212,5 +212,6 @@ __marimo__/
 *~
 
 # Session tracking and process docs (local only)
+docs/dev/
 docs/procs/
 docs/misc/
