@@ -18,6 +18,7 @@ from typing import List, Optional, Tuple
 
 class BumpType(Enum):
     """Version bump types."""
+
     MAJOR = "major"
     MINOR = "minor"
     PATCH = "patch"
@@ -28,6 +29,7 @@ class BumpType(Enum):
 @dataclass
 class CommitAnalysis:
     """Result of commit analysis."""
+
     bump_type: BumpType
     commit_count: int
     major_commits: List[str]
@@ -41,17 +43,11 @@ class CommitAnalyzer:
     """Analyzes git commits to determine version bumps."""
 
     # Commit label patterns (order matters - checked in sequence)
-    MAJOR_PREFIXES = [
-        "major:", "breaking:", "api:", "arch:", "ux:"
-    ]
+    MAJOR_PREFIXES = ["major:", "breaking:", "api:", "arch:", "ux:"]
 
-    MINOR_PREFIXES = [
-        "feat:", "feature:", "add:", "minor:", "ref:", "mrg:"
-    ]
+    MINOR_PREFIXES = ["feat:", "feature:", "add:", "minor:", "ref:", "mrg:"]
 
-    PATCH_PREFIXES = [
-        "fix:", "patch:", "bug:", "hotfix:", "up:", "imp:", "qol:", "stb:"
-    ]
+    PATCH_PREFIXES = ["fix:", "patch:", "bug:", "hotfix:", "up:", "imp:", "qol:", "stb:"]
 
     DEV_PREFIXES = ["dev:"]
 
@@ -117,7 +113,7 @@ class CommitAnalyzer:
             minor_commits=minor_commits,
             patch_commits=patch_commits,
             dev_commits=dev_commits,
-            ignored_commits=ignored_commits
+            ignored_commits=ignored_commits,
         )
 
     def _get_commits_since(self, tag: Optional[str] = None) -> List[str]:
@@ -139,14 +135,10 @@ class CommitAnalyzer:
                 cmd = ["git", "log", "--format=%s"]
 
             result = subprocess.run(
-                cmd,
-                cwd=self.repo_path,
-                capture_output=True,
-                text=True,
-                check=True
+                cmd, cwd=self.repo_path, capture_output=True, text=True, check=True
             )
 
-            commits = [line.strip() for line in result.stdout.strip().split('\n') if line.strip()]
+            commits = [line.strip() for line in result.stdout.strip().split("\n") if line.strip()]
             return commits
 
         except subprocess.CalledProcessError:

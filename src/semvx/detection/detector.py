@@ -25,6 +25,7 @@ from .foundations import (
 # Manifest File Detection (High Confidence Project Types)
 # ============================================================================
 
+
 def has_rust_manifest(repo_path: Path) -> bool:
     """
     Check for Rust project manifest (Cargo.toml with [package] section).
@@ -40,9 +41,9 @@ def has_rust_manifest(repo_path: Path) -> bool:
         return False
 
     try:
-        content = cargo_toml.read_text(encoding='utf-8')
+        content = cargo_toml.read_text(encoding="utf-8")
         # Simple check for [package] section
-        return '[package]' in content
+        return "[package]" in content
     except (OSError, UnicodeDecodeError):
         return False
 
@@ -62,9 +63,9 @@ def has_javascript_manifest(repo_path: Path) -> bool:
         return False
 
     try:
-        content = package_json.read_text(encoding='utf-8')
+        content = package_json.read_text(encoding="utf-8")
         data = json.loads(content)
-        return isinstance(data, dict) and 'version' in data
+        return isinstance(data, dict) and "version" in data
     except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         return False
 
@@ -85,9 +86,9 @@ def has_python_manifest(repo_path: Path) -> bool:
     pyproject_toml = repo_path / "pyproject.toml"
     if pyproject_toml.exists():
         try:
-            content = pyproject_toml.read_text(encoding='utf-8')
+            content = pyproject_toml.read_text(encoding="utf-8")
             # Check for [project] section (PEP 621) or [tool.poetry] (Poetry)
-            return '[project]' in content or '[tool.poetry]' in content
+            return "[project]" in content or "[tool.poetry]" in content
         except (OSError, UnicodeDecodeError):
             pass
 
@@ -95,9 +96,9 @@ def has_python_manifest(repo_path: Path) -> bool:
     setup_py = repo_path / "setup.py"
     if setup_py.exists():
         try:
-            content = setup_py.read_text(encoding='utf-8')
+            content = setup_py.read_text(encoding="utf-8")
             # Simple heuristic: contains setup() call and version parameter
-            return 'setup(' in content and 'version' in content
+            return "setup(" in content and "version" in content
         except (OSError, UnicodeDecodeError):
             pass
 
@@ -107,6 +108,7 @@ def has_python_manifest(repo_path: Path) -> bool:
 # ============================================================================
 # Bash Pattern Detection (Complex, Multiple Patterns)
 # ============================================================================
+
 
 def is_generated_file(file_path: Path) -> bool:
     """
@@ -120,11 +122,11 @@ def is_generated_file(file_path: Path) -> bool:
     """
     try:
         # Only check first few lines for performance
-        with file_path.open('r', encoding='utf-8') as f:
+        with file_path.open("r", encoding="utf-8") as f:
             for i, line in enumerate(f):
                 if i > 10:  # Only check first 10 lines
                     break
-                if '# generated' in line.lower():
+                if "# generated" in line.lower():
                     return True
         return False
     except (OSError, UnicodeDecodeError):
@@ -146,12 +148,9 @@ def has_version_comment(file_path: Path) -> bool:
         True if version comment found, False otherwise
     """
     try:
-        content = file_path.read_text(encoding='utf-8')
+        content = file_path.read_text(encoding="utf-8")
         # Look for version comment patterns
-        patterns = [
-            r'#\s*semv-version:\s*\S+',
-            r'#\s*version:\s*\S+'
-        ]
+        patterns = [r"#\s*semv-version:\s*\S+", r"#\s*version:\s*\S+"]
         for pattern in patterns:
             if re.search(pattern, content, re.IGNORECASE):
                 return True
@@ -180,16 +179,18 @@ def detect_bash_patterns(repo_path: Path) -> Optional[str]:
     repo_path = Path(repo_path).resolve()
 
     # Pattern 1: BashFX build.sh (build.sh + parts/ directory)
-    if ((repo_path / "build.sh").exists() and
-        (repo_path / "parts").exists() and
-        (repo_path / "parts").is_dir()):
+    if (
+        (repo_path / "build.sh").exists()
+        and (repo_path / "parts").exists()
+        and (repo_path / "parts").is_dir()
+    ):
         return "bashfx-buildsh"
 
     # Pattern 2: BashFX simple (prefix-name/ directory with name.sh)
     for item in repo_path.iterdir():
-        if item.is_dir() and '-' in item.name:
+        if item.is_dir() and "-" in item.name:
             # Look for name.sh inside prefix-name/ directory
-            prefix, name = item.name.split('-', 1)
+            prefix, name = item.name.split("-", 1)
             script_file = item / f"{name}.sh"
             if script_file.exists():
                 return "bashfx-simple"
@@ -242,8 +243,8 @@ def get_bash_project_file(repo_path: Path, pattern: str) -> Optional[Path]:
     elif pattern == "bashfx-simple":
         # Find the main script in prefix-name/ directory
         for item in repo_path.iterdir():
-            if item.is_dir() and '-' in item.name:
-                prefix, name = item.name.split('-', 1)
+            if item.is_dir() and "-" in item.name:
+                prefix, name = item.name.split("-", 1)
                 script_file = item / f"{name}.sh"
                 if script_file.exists():
                     return script_file
@@ -255,9 +256,9 @@ def get_bash_project_file(repo_path: Path, pattern: str) -> Optional[Path]:
         # Parse .semvrc to find BASH_VERSION_FILE
         semvrc = repo_path / ".semvrc"
         try:
-            content = semvrc.read_text(encoding='utf-8')
+            content = semvrc.read_text(encoding="utf-8")
             # Look for BASH_VERSION_FILE=path
-            match = re.search(r'BASH_VERSION_FILE=([^\s]+)', content)
+            match = re.search(r"BASH_VERSION_FILE=([^\s]+)", content)
             if match:
                 return repo_path / match.group(1)
         except (OSError, UnicodeDecodeError):
@@ -276,6 +277,7 @@ def get_bash_project_file(repo_path: Path, pattern: str) -> Optional[Path]:
 # Version Extraction Functions
 # ============================================================================
 
+
 def extract_rust_version(file_path: Path) -> Optional[str]:
     """
     Extract version from Rust Cargo.toml file.
@@ -287,11 +289,10 @@ def extract_rust_version(file_path: Path) -> Optional[str]:
         Version string if found, None otherwise
     """
     try:
-        content = file_path.read_text(encoding='utf-8')
+        content = file_path.read_text(encoding="utf-8")
         # Simple regex for version in [package] section
         # This avoids needing a TOML parser dependency
-        match = re.search(r'\[package\].*?version\s*=\s*["\']([^"\']+)["\']',
-                         content, re.DOTALL)
+        match = re.search(r'\[package\].*?version\s*=\s*["\']([^"\']+)["\']', content, re.DOTALL)
         if match:
             return match.group(1)
     except (OSError, UnicodeDecodeError):
@@ -310,9 +311,9 @@ def extract_javascript_version(file_path: Path) -> Optional[str]:
         Version string if found, None otherwise
     """
     try:
-        content = file_path.read_text(encoding='utf-8')
+        content = file_path.read_text(encoding="utf-8")
         data = json.loads(content)
-        return data.get('version')
+        return data.get("version")
     except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         pass
     return None
@@ -329,13 +330,13 @@ def extract_python_version(file_path: Path) -> Optional[str]:
         Version string if found, None otherwise
     """
     try:
-        content = file_path.read_text(encoding='utf-8')
+        content = file_path.read_text(encoding="utf-8")
 
         if file_path.name == "pyproject.toml":
             # Look for [project] version or [tool.poetry] version
             patterns = [
                 r'\[project\].*?version\s*=\s*["\']([^"\']+)["\']',
-                r'\[tool\.poetry\].*?version\s*=\s*["\']([^"\']+)["\']'
+                r'\[tool\.poetry\].*?version\s*=\s*["\']([^"\']+)["\']',
             ]
             for pattern in patterns:
                 match = re.search(pattern, content, re.DOTALL)
@@ -344,14 +345,11 @@ def extract_python_version(file_path: Path) -> Optional[str]:
 
         elif file_path.name == "setup.py":
             # Look for version in setup() call
-            patterns = [
-                r'version\s*=\s*["\']([^"\']+)["\']',
-                r'version\s*=\s*([^,\s)]+)'
-            ]
+            patterns = [r'version\s*=\s*["\']([^"\']+)["\']', r"version\s*=\s*([^,\s)]+)"]
             for pattern in patterns:
                 match = re.search(pattern, content)
                 if match:
-                    version = match.group(1).strip('\'"')
+                    version = match.group(1).strip("'\"")
                     return version
 
     except (OSError, UnicodeDecodeError):
@@ -376,16 +374,13 @@ def extract_bash_version(file_path: Path) -> Optional[str]:
         Version string if found, None otherwise
     """
     try:
-        content = file_path.read_text(encoding='utf-8')
+        content = file_path.read_text(encoding="utf-8")
 
-        patterns = [
-            r'#\s*semv-version:\s*([^\s]+)',
-            r'#\s*version:\s*([^\s]+)'
-        ]
+        patterns = [r"#\s*semv-version:\s*([^\s]+)", r"#\s*version:\s*([^\s]+)"]
 
-        for line in content.split('\n'):
+        for line in content.split("\n"):
             # Skip lines with code artifacts
-            if '$' in line or '"' in line:
+            if "$" in line or '"' in line:
                 continue
 
             for pattern in patterns:
@@ -401,6 +396,7 @@ def extract_bash_version(file_path: Path) -> Optional[str]:
 # ============================================================================
 # Project Detection with Fallback Hierarchy
 # ============================================================================
+
 
 def detect_projects(repo_path: Path) -> List[Dict[str, Union[str, None]]]:
     """
@@ -433,22 +429,16 @@ def detect_projects(repo_path: Path) -> List[Dict[str, Union[str, None]]]:
     if has_rust_manifest(repo_path):
         version_file = repo_path / "Cargo.toml"
         version = extract_rust_version(version_file)
-        projects.append({
-            "type": "rust",
-            "root": "./",
-            "version_file": "Cargo.toml",
-            "version": version
-        })
+        projects.append(
+            {"type": "rust", "root": "./", "version_file": "Cargo.toml", "version": version}
+        )
 
     if has_javascript_manifest(repo_path):
         version_file = repo_path / "package.json"
         version = extract_javascript_version(version_file)
-        projects.append({
-            "type": "javascript",
-            "root": "./",
-            "version_file": "package.json",
-            "version": version
-        })
+        projects.append(
+            {"type": "javascript", "root": "./", "version_file": "package.json", "version": version}
+        )
 
     if has_python_manifest(repo_path):
         # Prefer pyproject.toml over setup.py
@@ -460,12 +450,9 @@ def detect_projects(repo_path: Path) -> List[Dict[str, Union[str, None]]]:
             version_file_name = "setup.py"
 
         version = extract_python_version(version_file)
-        projects.append({
-            "type": "python",
-            "root": "./",
-            "version_file": version_file_name,
-            "version": version
-        })
+        projects.append(
+            {"type": "python", "root": "./", "version_file": version_file_name, "version": version}
+        )
 
     # Priority 2: BashFX patterns (structured bash projects)
     bash_pattern = detect_bash_patterns(repo_path)
@@ -475,12 +462,14 @@ def detect_projects(repo_path: Path) -> List[Dict[str, Union[str, None]]]:
             version = extract_bash_version(bash_file)
             # Make path relative to repo root
             relative_path = bash_file.relative_to(repo_path)
-            projects.append({
-                "type": "bash",
-                "root": "./",
-                "version_file": str(relative_path),
-                "version": version
-            })
+            projects.append(
+                {
+                    "type": "bash",
+                    "root": "./",
+                    "version_file": str(relative_path),
+                    "version": version,
+                }
+            )
 
     # Priority 3: Simple bash fallback (only if no manifest files or BashFX)
     elif not projects and bash_pattern == "generic":
@@ -488,21 +477,18 @@ def detect_projects(repo_path: Path) -> List[Dict[str, Union[str, None]]]:
         if bash_file:
             version = extract_bash_version(bash_file)
             relative_path = bash_file.relative_to(repo_path)
-            projects.append({
-                "type": "bash",
-                "root": "./",
-                "version_file": str(relative_path),
-                "version": version
-            })
+            projects.append(
+                {
+                    "type": "bash",
+                    "root": "./",
+                    "version_file": str(relative_path),
+                    "version": version,
+                }
+            )
 
     # Priority 4: Unknown project type (git repo but no detectable patterns)
     elif not projects and detect_repository_type(repo_path) in ["git", "gitsim"]:
-        projects.append({
-            "type": "unknown",
-            "root": "./",
-            "version_file": None,
-            "version": None
-        })
+        projects.append({"type": "unknown", "root": "./", "version_file": None, "version": None})
 
     return projects
 
@@ -511,7 +497,10 @@ def detect_projects(repo_path: Path) -> List[Dict[str, Union[str, None]]]:
 # Validation Functions
 # ============================================================================
 
-def validate_project_structure(repo_path: Path, projects: List[Dict]) -> Dict[str, Dict[str, Union[bool, str, None]]]:
+
+def validate_project_structure(
+    repo_path: Path, projects: List[Dict]
+) -> Dict[str, Dict[str, Union[bool, str, None]]]:
     """
     Validate detected projects have parseable files and valid versions.
 
@@ -563,6 +552,7 @@ def validate_project_structure(repo_path: Path, projects: List[Dict]) -> Dict[st
 # ============================================================================
 # Standard Tools and Script Detection
 # ============================================================================
+
 
 def detect_standard_bin_tools(repo_path: Path) -> Dict[str, Dict[str, Union[bool, str]]]:
     """
@@ -619,8 +609,7 @@ def detect_emerging_tools(repo_path: Path) -> Dict[str, Union[bool, List[str]]]:
     emerging = {}
 
     # Check for Makefile
-    makefile_exists = ((repo_path / "Makefile").exists() or
-                      (repo_path / "makefile").exists())
+    makefile_exists = (repo_path / "Makefile").exists() or (repo_path / "makefile").exists()
     if makefile_exists:
         makefile_path = "Makefile" if (repo_path / "Makefile").exists() else "makefile"
         emerging["makefile"] = {"exists": True, "path": f"./{makefile_path}"}
@@ -677,15 +666,15 @@ def detect_script_metadata(repo_path: Path) -> Dict[str, Union[str, List[str], N
     script_directories = []
 
     for item in repo_path.iterdir():
-        if (item.is_dir() and
-            item.name in script_dir_names and
-            item.name != "bin"):  # bin handled separately
+        if (
+            item.is_dir() and item.name in script_dir_names and item.name != "bin"
+        ):  # bin handled separately
             script_directories.append(f"./{item.name}")
 
     return {
         "bin_directory": bin_directory,
         "root_scripts": root_scripts,
-        "script_directories": script_directories
+        "script_directories": script_directories,
     }
 
 
@@ -705,9 +694,20 @@ def detect_dirty_directories(repo_path: Path) -> List[str]:
     repo_path = Path(repo_path).resolve()
 
     dirty_patterns = [
-        "node_modules", "target", ".venv", "venv", "__pycache__",
-        "build", "dist", ".tox", ".pytest_cache", ".coverage",
-        ".nyc_output", "coverage", ".next", ".nuxt"
+        "node_modules",
+        "target",
+        ".venv",
+        "venv",
+        "__pycache__",
+        "build",
+        "dist",
+        ".tox",
+        ".pytest_cache",
+        ".coverage",
+        ".nyc_output",
+        "coverage",
+        ".next",
+        ".nuxt",
     ]
 
     found_dirty = []
@@ -722,6 +722,7 @@ def detect_dirty_directories(repo_path: Path) -> List[str]:
 # ============================================================================
 # Primary Detection API
 # ============================================================================
+
 
 def get_repository_context(repo_path: Path) -> Dict:
     """
@@ -756,43 +757,36 @@ def get_repository_context(repo_path: Path) -> Dict:
         "type": repo_type,
         "branch": "main",  # Would extract from git/gitsim
         "is_clean": True,  # Would check git status
-        "last_commit": None  # Would extract from git log
+        "last_commit": None,  # Would extract from git log
     }
 
     # Basic workspace detection (placeholder for future enhancement)
-    workspace_info = {
-        "is_workspace": False,
-        "type": None,
-        "members": []
-    }
+    workspace_info = {"is_workspace": False, "type": None, "members": []}
 
     # Detection metadata
     meta_info = {
         "detector_version": "1.0.0",
         "detection_time": "2025-09-23T10:30:00Z",  # Would use actual timestamp
-        "detection_duration_ms": 50  # Would measure actual time
+        "detection_duration_ms": 50,  # Would measure actual time
     }
 
     return {
         "repository": repository_info,
         "projects": projects,
-        "tools": {
-            "standard_bin": standard_bin_tools,
-            "emerging": emerging_tools
-        },
+        "tools": {"standard_bin": standard_bin_tools, "emerging": emerging_tools},
         "scripts": script_metadata,
         "dirty_directories": dirty_directories,
         "workspace": workspace_info,
         "validation": validation,
         "gitsim": gitsim_status,
-        "meta": meta_info
+        "meta": meta_info,
     }
-
 
 
 # ============================================================================
 # Convenience Functions
 # ============================================================================
+
 
 def get_project_types(repo_path: Path) -> List[str]:
     """

@@ -36,12 +36,12 @@ def normalize_semver(version: str) -> str:
     version = version.strip()
 
     # Add 'v' prefix if missing
-    if not version.startswith('v'):
+    if not version.startswith("v"):
         version = f"v{version}"
 
     # Extract base version (remove pre-release and build metadata)
     # Pattern: vX.Y.Z[-pre-release][+build]
-    base_match = re.match(r'v?(\d+)\.(\d+)\.?(\d*)', version)
+    base_match = re.match(r"v?(\d+)\.(\d+)\.?(\d*)", version)
     if not base_match:
         return "v0.0.0"
 
@@ -77,8 +77,8 @@ def compare_semver(version1: str, version2: str) -> int:
     v2_norm = normalize_semver(version2)
 
     # Extract version components
-    v1_match = re.match(r'v(\d+)\.(\d+)\.(\d+)', v1_norm)
-    v2_match = re.match(r'v(\d+)\.(\d+)\.(\d+)', v2_norm)
+    v1_match = re.match(r"v(\d+)\.(\d+)\.(\d+)", v1_norm)
+    v2_match = re.match(r"v(\d+)\.(\d+)\.(\d+)", v2_norm)
 
     if not v1_match or not v2_match:
         # Fallback to string comparison if parsing fails
@@ -121,7 +121,7 @@ def validate_semver_format(version: str) -> bool:
         return False
 
     # Allow optional 'v' prefix, require X.Y.Z core, allow pre-release and build
-    pattern = r'^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z\-\.]+))?(?:\+([0-9A-Za-z\-\.]+))?$'
+    pattern = r"^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z\-\.]+))?(?:\+([0-9A-Za-z\-\.]+))?$"
     return bool(re.match(pattern, version.strip()))
 
 

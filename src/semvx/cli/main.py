@@ -130,7 +130,8 @@ def main():
 
 def print_help():
     """Print help message."""
-    print("""
+    print(
+        """
 semvx 3.0.0-dev - Semantic Version Manager (Python Edition)
 
 USAGE:
@@ -197,7 +198,8 @@ NOTE: This is the Python rewrite of SEMV with namespace separation.
       The original bash semv remains available separately.
 
 For detailed documentation: docs/procs/PROCESS.md
-""")
+"""
+    )
 
 
 def do_detection():
@@ -210,17 +212,17 @@ def do_detection():
         print(f"Repository Type: {context['repository']['type']}")
         print(f"Projects Found: {len(context['projects'])}")
 
-        for i, project in enumerate(context['projects'], 1):
+        for i, project in enumerate(context["projects"], 1):
             print(f"  {i}. {project['type']}")
-            if project.get('version_file'):
+            if project.get("version_file"):
                 print(f"     Version File: {project['version_file']}")
-            if project.get('version'):
+            if project.get("version"):
                 print(f"     Version: {project['version']}")
 
-        if context['validation']:
+        if context["validation"]:
             print("Validation Results:")
-            for proj_type, result in context['validation'].items():
-                status = "✅ OK" if result.get('ok') else f"❌ {result.get('reason', 'FAIL')}"
+            for proj_type, result in context["validation"].items():
+                status = "✅ OK" if result.get("ok") else f"❌ {result.get('reason', 'FAIL')}"
                 print(f"  {proj_type}: {status}")
 
     except Exception as e:
@@ -257,7 +259,7 @@ def do_status():
             "current_version": status.current_version,
             "next_version": status.next_version,
             "package_version": status.package_version,
-            "pending_actions": status.pending_actions
+            "pending_actions": status.pending_actions,
         }
 
         # Check view mode
@@ -279,6 +281,7 @@ def do_status():
     except Exception as e:
         print(f"❌ Error getting status: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
@@ -302,7 +305,7 @@ def do_bump_command():
         repo_path = Path.cwd()
         context = get_repository_context(repo_path)
 
-        if not context['projects']:
+        if not context["projects"]:
             print("❌ No projects detected in current directory.")
             print("Run 'semvx detect' to see what can be detected.")
             sys.exit(1)
@@ -310,9 +313,9 @@ def do_bump_command():
         print(f"🔧 Bumping {bump_type} version{' (DRY RUN)' if dry_run else ''}...")
         print("=" * 60)
 
-        for project in context['projects']:
-            proj_type = project['type']
-            current_version = project.get('version', 'v0.0.0')
+        for project in context["projects"]:
+            proj_type = project["type"]
+            current_version = project.get("version", "v0.0.0")
 
             try:
                 # Parse current version
@@ -331,7 +334,7 @@ def do_bump_command():
                 print(f"   Current:  {sem_ver}")
                 print(f"   New:      {new_ver}")
 
-                version_file = project.get('version_file', 'N/A')
+                version_file = project.get("version_file", "N/A")
                 print(f"   File:     {version_file}")
 
                 if not dry_run:
@@ -368,7 +371,8 @@ def do_bump_command():
 
 def print_bump_help():
     """Print help for bump command."""
-    print("""
+    print(
+        """
 semvx bump - Bump semantic version
 
 USAGE:
@@ -389,7 +393,8 @@ EXAMPLES:
     semvx bump major --dry-run  # Preview major bump (1.2.3 → 2.0.0)
 
 NOTE: Currently supports version calculation. File writing coming soon.
-""")
+"""
+    )
 
 
 def do_version_command():
@@ -398,24 +403,24 @@ def do_version_command():
         repo_path = Path.cwd()
         context = get_repository_context(repo_path)
 
-        if not context['projects']:
+        if not context["projects"]:
             print("No projects detected in current directory.")
             return
 
         print("📋 Project Versions")
         print("=" * 60)
 
-        for project in context['projects']:
-            proj_type = project['type']
-            version = project.get('version', 'N/A')
-            version_file = project.get('version_file', 'N/A')
+        for project in context["projects"]:
+            proj_type = project["type"]
+            version = project.get("version", "N/A")
+            version_file = project.get("version_file", "N/A")
 
             print(f"\n{proj_type.upper()}:")
             print(f"  Version: {version}")
             print(f"  File:    {version_file}")
 
             # Try to parse and show details
-            if version != 'N/A':
+            if version != "N/A":
                 try:
                     sem_ver = SemanticVersion.parse(version)
                     print(f"  Parsed:  {sem_ver.major}.{sem_ver.minor}.{sem_ver.patch}")
@@ -462,7 +467,7 @@ def do_tag_command():
         # Get project context
         context = get_repository_context(repo_path)
 
-        if not context['projects']:
+        if not context["projects"]:
             print("❌ No projects detected in current directory.")
             sys.exit(1)
 
@@ -477,8 +482,8 @@ def do_tag_command():
                 sys.exit(1)
         else:
             # Use current project version
-            project = context['projects'][0]
-            current_version = project.get('version', 'v0.0.0')
+            project = context["projects"][0]
+            current_version = project.get("version", "v0.0.0")
             try:
                 version = SemanticVersion.parse(current_version)
             except VersionParseError:
@@ -489,11 +494,7 @@ def do_tag_command():
         print(f"🏷️  Creating git tag for version {version}...")
 
         success, message = GitVersionTagger.create_version_tag(
-            git_repo,
-            version,
-            prefix="v",
-            message=f"Release {version}",
-            force=force
+            git_repo, version, prefix="v", message=f"Release {version}", force=force
         )
 
         if success:
@@ -513,7 +514,8 @@ def do_tag_command():
 
 def print_tag_help():
     """Print help for tag command."""
-    print("""
+    print(
+        """
 semvx tag - Create git tag for version
 
 USAGE:
@@ -532,7 +534,8 @@ EXAMPLES:
     semvx tag 2.0.0 --force     # Force create tag (overwrite)
 
 NOTE: Creates annotated git tags with format 'vX.Y.Z'
-""")
+"""
+    )
 
 
 def do_tags_list_command():
@@ -630,9 +633,9 @@ def do_build_command():
         version = "unknown"
 
         # Try to get version from projects or git tags
-        if context['projects']:
+        if context["projects"]:
             # Use first project version
-            version = context['projects'][0].get('version', 'unknown')
+            version = context["projects"][0].get("version", "unknown")
 
         if version == "unknown" or version == "N/A":
             # Fall back to git tag
@@ -826,18 +829,18 @@ def do_validate_command():
         print("🔍 Version Validation")
         print("=" * 60)
 
-        if not context['projects']:
+        if not context["projects"]:
             print("❌ No projects detected")
             sys.exit(1)
 
         # Collect all versions
         versions = {}
-        for project in context['projects']:
-            proj_type = project['type']
-            version = project.get('version', 'N/A')
-            version_file = project.get('version_file', 'N/A')
+        for project in context["projects"]:
+            proj_type = project["type"]
+            version = project.get("version", "N/A")
+            version_file = project.get("version_file", "N/A")
 
-            if version != 'N/A':
+            if version != "N/A":
                 if version not in versions:
                     versions[version] = []
                 versions[version].append((proj_type, version_file))
@@ -849,7 +852,7 @@ def do_validate_command():
             if latest_tag:
                 print(f"Git Tag: {latest_tag}")
                 if latest_tag not in versions:
-                    versions[latest_tag] = [('git', 'tags')]
+                    versions[latest_tag] = [("git", "tags")]
         except GitError:
             latest_tag = None
 
@@ -936,28 +939,28 @@ def do_audit_command():
 
         print(f"\n📦 Projects Detected: {len(context['projects'])}")
 
-        if context['projects'] and is_rolo_available():
+        if context["projects"] and is_rolo_available():
             # Format projects as table
             project_data = []
-            for project in context['projects']:
-                proj_type = project['type'].upper()
-                version = project.get('version', 'N/A')
-                version_file = project.get('version_file', 'N/A')
+            for project in context["projects"]:
+                proj_type = project["type"].upper()
+                version = project.get("version", "N/A")
+                version_file = project.get("version_file", "N/A")
                 project_data.append([proj_type, version, version_file])
 
             table = format_as_table(
                 project_data,
                 headers=["Type", "Version", "File"],
                 border="ascii",
-                align="left,left,left"
+                align="left,left,left",
             )
             print()
             print(table)
         else:
-            for project in context['projects']:
-                proj_type = project['type']
-                version = project.get('version', 'N/A')
-                version_file = project.get('version_file', 'N/A')
+            for project in context["projects"]:
+                proj_type = project["type"]
+                version = project.get("version", "N/A")
+                version_file = project.get("version_file", "N/A")
 
                 print(f"\n  {proj_type.upper()}:")
                 print(f"    Version: {version}")
@@ -965,9 +968,9 @@ def do_audit_command():
 
         # Version consistency check
         versions = set()
-        for project in context['projects']:
-            version = project.get('version')
-            if version and version != 'N/A':
+        for project in context["projects"]:
+            version = project.get("version")
+            if version and version != "N/A":
                 versions.add(version)
 
         print("\n🔍 Version Analysis:")
@@ -1020,13 +1023,13 @@ def do_precommit_command():
         # Check 2: Version consistency
         context = get_repository_context(repo_path)
 
-        if not context['projects']:
+        if not context["projects"]:
             warnings.append("No projects detected")
         else:
             versions = set()
-            for project in context['projects']:
-                version = project.get('version')
-                if version and version != 'N/A':
+            for project in context["projects"]:
+                version = project.get("version")
+                if version and version != "N/A":
                     versions.add(version)
 
             if len(versions) > 1:
@@ -1036,9 +1039,9 @@ def do_precommit_command():
 
         # Check 3: Git tag vs project version
         latest_tag = git_repo.get_latest_tag()
-        if latest_tag and context['projects']:
-            project_version = context['projects'][0].get('version', 'N/A')
-            if project_version != 'N/A' and project_version != latest_tag:
+        if latest_tag and context["projects"]:
+            project_version = context["projects"][0].get("version", "N/A")
+            if project_version != "N/A" and project_version != latest_tag:
                 # Parse and compare
                 try:
                     tag_ver = SemanticVersion.parse(latest_tag)
@@ -1049,9 +1052,13 @@ def do_precommit_command():
                     elif proj_ver == tag_ver:
                         print(f"✅ Project version matches tag: {project_version}")
                     else:
-                        warnings.append(f"Project version behind tag: {project_version} < {latest_tag}")
+                        warnings.append(
+                            f"Project version behind tag: {project_version} < {latest_tag}"
+                        )
                 except VersionParseError:
-                    warnings.append(f"Version mismatch: project={project_version}, tag={latest_tag}")
+                    warnings.append(
+                        f"Version mismatch: project={project_version}, tag={latest_tag}"
+                    )
 
         # Check 4: Uncommitted changes (optional warning)
         try:
@@ -1060,10 +1067,10 @@ def do_precommit_command():
                 cwd=repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             if result.stdout.strip():
-                changes = len(result.stdout.strip().split('\n'))
+                changes = len(result.stdout.strip().split("\n"))
                 print(f"\n📝 Uncommitted changes: {changes} file(s)")
         except subprocess.CalledProcessError:
             pass

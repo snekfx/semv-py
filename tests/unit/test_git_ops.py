@@ -28,7 +28,7 @@ class TestGitRepository:
 
         # Non-git directory
         assert not GitRepository.__new__(GitRepository).is_git_repository.__func__(
-            type('obj', (), {'repo_path': tmp_path})()
+            type("obj", (), {"repo_path": tmp_path})()
         )
 
     def test_get_current_branch(self, git_repository):
@@ -38,7 +38,7 @@ class TestGitRepository:
         assert branch is not None
         assert isinstance(branch, str)
         # Default branch is usually 'main' or 'master'
-        assert branch in ['main', 'master'] or len(branch) > 0
+        assert branch in ["main", "master"] or len(branch) > 0
 
     def test_get_latest_tag_no_tags(self, git_repository):
         """Test getting latest tag when no tags exist."""
@@ -64,10 +64,7 @@ class TestGitRepository:
         """Test creating annotated tag with message."""
         repo = GitRepository(git_repository)
 
-        success, message = repo.create_tag(
-            "v1.0.0",
-            message="Release version 1.0.0"
-        )
+        success, message = repo.create_tag("v1.0.0", message="Release version 1.0.0")
         assert success
         assert "v1.0.0" in message
 
@@ -202,9 +199,7 @@ class TestGitVersionTagger:
         repo = GitRepository(git_repository)
         version = SemanticVersion(2, 0, 0)
 
-        success, message = GitVersionTagger.create_version_tag(
-            repo, version, prefix="release-"
-        )
+        success, message = GitVersionTagger.create_version_tag(repo, version, prefix="release-")
         assert success
         assert repo.tag_exists("release-2.0.0")
 
@@ -239,9 +234,7 @@ class TestGitVersionTagger:
         GitVersionTagger.create_version_tag(repo, version)
 
         # Force create again
-        success, message = GitVersionTagger.create_version_tag(
-            repo, version, force=True
-        )
+        success, message = GitVersionTagger.create_version_tag(repo, version, force=True)
         assert success
 
     def test_get_version_tags(self, git_repository):
@@ -285,11 +278,7 @@ class TestGitRemoteOperations:
         repo = GitRepository(git_repository)
 
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(
-                stdout="origin\n",
-                stderr="",
-                returncode=0
-            )
+            mock_run.return_value = MagicMock(stdout="origin\n", stderr="", returncode=0)
 
             assert repo.has_remote() is True
 
@@ -300,11 +289,7 @@ class TestGitRemoteOperations:
         repo = GitRepository(git_repository)
 
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(
-                stdout="",
-                stderr="",
-                returncode=0
-            )
+            mock_run.return_value = MagicMock(stdout="", stderr="", returncode=0)
 
             assert repo.has_remote() is False
 
@@ -315,11 +300,7 @@ class TestGitRemoteOperations:
         repo = GitRepository(git_repository)
 
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(
-                stdout="",
-                stderr="",
-                returncode=0
-            )
+            mock_run.return_value = MagicMock(stdout="", stderr="", returncode=0)
 
             success, message = repo.fetch_tags()
 
@@ -353,7 +334,7 @@ class TestGitRemoteOperations:
             mock_run.return_value = MagicMock(
                 stdout="abc123\trefs/tags/v1.0.0\ndef456\trefs/tags/v1.2.0\nghi789\trefs/tags/v1.1.0\n",
                 stderr="",
-                returncode=0
+                returncode=0,
             )
 
             result = repo.get_remote_latest_tag()
@@ -367,11 +348,7 @@ class TestGitRemoteOperations:
         repo = GitRepository(git_repository)
 
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(
-                stdout="",
-                stderr="",
-                returncode=0
-            )
+            mock_run.return_value = MagicMock(stdout="", stderr="", returncode=0)
 
             result = repo.get_remote_latest_tag()
 

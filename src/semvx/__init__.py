@@ -14,6 +14,7 @@ __email__ = "dev@semv.tools"
 # Core imports
 try:
     from semvx.core import SemanticVersion, VersionParseError
+
     __all__ = ["SemanticVersion", "VersionParseError", "__version__"]
 except ImportError:
     # Fallback if core module not available

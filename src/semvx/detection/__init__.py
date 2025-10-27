@@ -12,9 +12,4 @@ Compatible with: SEMV v3.0+, Blade Next v1.0+
 # Import what actually exists in the detector module
 from .detector import compare_semver, get_highest_version, get_repository_context, normalize_semver
 
-__all__ = [
-    "get_repository_context",
-    "normalize_semver",
-    "compare_semver",
-    "get_highest_version"
-]
+__all__ = ["get_repository_context", "normalize_semver", "compare_semver", "get_highest_version"]

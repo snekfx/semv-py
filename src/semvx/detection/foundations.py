@@ -14,6 +14,7 @@ from typing import Dict, List, Union
 # SemVer Utilities
 # ============================================================================
 
+
 def normalize_semver(version: str) -> str:
     """
     Normalize version to vX.Y.Z format for consistent comparison.
@@ -36,11 +37,11 @@ def normalize_semver(version: str) -> str:
     version = version.strip()
 
     # Add 'v' prefix if missing
-    if not version.startswith('v'):
+    if not version.startswith("v"):
         version = f"v{version}"
 
     # Extract base version (remove pre-release and build metadata)
-    base_match = re.match(r'v?(\d+)\.(\d+)\.?(\d*)', version)
+    base_match = re.match(r"v?(\d+)\.(\d+)\.?(\d*)", version)
     if not base_match:
         return "v0.0.0"
 
@@ -66,8 +67,8 @@ def compare_semver(version1: str, version2: str) -> int:
     v1_norm = normalize_semver(version1)
     v2_norm = normalize_semver(version2)
 
-    v1_match = re.match(r'v(\d+)\.(\d+)\.(\d+)', v1_norm)
-    v2_match = re.match(r'v(\d+)\.(\d+)\.(\d+)', v2_norm)
+    v1_match = re.match(r"v(\d+)\.(\d+)\.(\d+)", v1_norm)
+    v2_match = re.match(r"v(\d+)\.(\d+)\.(\d+)", v2_norm)
 
     if not v1_match or not v2_match:
         return -1 if v1_norm < v2_norm else (1 if v1_norm > v2_norm else 0)
@@ -97,7 +98,7 @@ def validate_semver_format(version: str) -> bool:
     if not version:
         return False
 
-    pattern = r'^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z\-\.]+))?(?:\+([0-9A-Za-z\-\.]+))?$'
+    pattern = r"^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z\-\.]+))?(?:\+([0-9A-Za-z\-\.]+))?$"
     return bool(re.match(pattern, version.strip()))
 
 
@@ -129,6 +130,7 @@ def get_highest_version(versions: List[str]) -> str:
 # ============================================================================
 # Repository Environment Detection
 # ============================================================================
+
 
 def detect_repository_type(repo_path: Path) -> str:
     """
@@ -181,7 +183,7 @@ def validate_gitsim_environment(repo_path: Path) -> Dict[str, Union[bool, str, N
         "is_gitsim": is_gitsim,
         "gitsim_available": gitsim_available,
         "status": "not_gitsim",
-        "simulation_info": None
+        "simulation_info": None,
     }
 
     if not is_gitsim:
@@ -197,7 +199,7 @@ def validate_gitsim_environment(repo_path: Path) -> Dict[str, Union[bool, str, N
             "simulation_active": True,
             "base_branch": "main",
             "simulated_commits": 0,
-            "config_file": str(repo_path / ".gitsim" / "config")
+            "config_file": str(repo_path / ".gitsim" / "config"),
         }
     except Exception:
         result["status"] = "gitsim_error"

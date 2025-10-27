@@ -13,6 +13,7 @@ from typing import Optional
 
 class VersionParseError(Exception):
     """Raised when version string cannot be parsed as semantic version."""
+
     pass
 
 
@@ -33,6 +34,7 @@ class SemanticVersion:
         >>> v1.bump_major()
         SemanticVersion(major=2, minor=0, patch=0, prerelease=None, build_metadata=None)
     """
+
     major: int
     minor: int
     patch: int
@@ -40,7 +42,7 @@ class SemanticVersion:
     build_metadata: Optional[str] = None
 
     @classmethod
-    def parse(cls, version_string: str) -> 'SemanticVersion':
+    def parse(cls, version_string: str) -> "SemanticVersion":
         """
         Parse a version string into SemanticVersion.
 
@@ -58,12 +60,12 @@ class SemanticVersion:
 
         # Remove optional 'v' prefix
         version = version_string.strip()
-        if version.startswith('v'):
+        if version.startswith("v"):
             version = version[1:]
 
         # Semantic version regex pattern
         # Captures: major.minor.patch[-prerelease][+build]
-        pattern = r'^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z\-\.]+))?(?:\+([0-9A-Za-z\-\.]+))?$'
+        pattern = r"^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z\-\.]+))?(?:\+([0-9A-Za-z\-\.]+))?$"
         match = re.match(pattern, version)
 
         if not match:
@@ -76,36 +78,28 @@ class SemanticVersion:
             minor=int(minor),
             patch=int(patch),
             prerelease=prerelease,
-            build_metadata=build_metadata
+            build_metadata=build_metadata,
         )
 
-    def bump_major(self) -> 'SemanticVersion':
+    def bump_major(self) -> "SemanticVersion":
         """
         Return new version with major increment.
         Minor and patch are reset to 0, pre-release and build metadata cleared.
         """
         return SemanticVersion(
-            major=self.major + 1,
-            minor=0,
-            patch=0,
-            prerelease=None,
-            build_metadata=None
+            major=self.major + 1, minor=0, patch=0, prerelease=None, build_metadata=None
         )
 
-    def bump_minor(self) -> 'SemanticVersion':
+    def bump_minor(self) -> "SemanticVersion":
         """
         Return new version with minor increment.
         Patch is reset to 0, pre-release and build metadata cleared.
         """
         return SemanticVersion(
-            major=self.major,
-            minor=self.minor + 1,
-            patch=0,
-            prerelease=None,
-            build_metadata=None
+            major=self.major, minor=self.minor + 1, patch=0, prerelease=None, build_metadata=None
         )
 
-    def bump_patch(self) -> 'SemanticVersion':
+    def bump_patch(self) -> "SemanticVersion":
         """
         Return new version with patch increment.
         Pre-release and build metadata cleared.
@@ -115,27 +109,27 @@ class SemanticVersion:
             minor=self.minor,
             patch=self.patch + 1,
             prerelease=None,
-            build_metadata=None
+            build_metadata=None,
         )
 
-    def with_prerelease(self, prerelease: str) -> 'SemanticVersion':
+    def with_prerelease(self, prerelease: str) -> "SemanticVersion":
         """Return new version with specified pre-release."""
         return SemanticVersion(
             major=self.major,
             minor=self.minor,
             patch=self.patch,
             prerelease=prerelease,
-            build_metadata=self.build_metadata
+            build_metadata=self.build_metadata,
         )
 
-    def with_build_metadata(self, build_metadata: str) -> 'SemanticVersion':
+    def with_build_metadata(self, build_metadata: str) -> "SemanticVersion":
         """Return new version with specified build metadata."""
         return SemanticVersion(
             major=self.major,
             minor=self.minor,
             patch=self.patch,
             prerelease=self.prerelease,
-            build_metadata=build_metadata
+            build_metadata=build_metadata,
         )
 
     def __str__(self) -> str:
@@ -152,19 +146,23 @@ class SemanticVersion:
 
     def __repr__(self) -> str:
         """Return detailed string representation."""
-        return (f"SemanticVersion(major={self.major}, minor={self.minor}, "
-                f"patch={self.patch}, prerelease={self.prerelease!r}, "
-                f"build_metadata={self.build_metadata!r})")
+        return (
+            f"SemanticVersion(major={self.major}, minor={self.minor}, "
+            f"patch={self.patch}, prerelease={self.prerelease!r}, "
+            f"build_metadata={self.build_metadata!r})"
+        )
 
     def __eq__(self, other) -> bool:
         """Check equality (build metadata ignored per semver spec)."""
         if not isinstance(other, SemanticVersion):
             return NotImplemented
 
-        return (self.major == other.major and
-                self.minor == other.minor and
-                self.patch == other.patch and
-                self.prerelease == other.prerelease)
+        return (
+            self.major == other.major
+            and self.minor == other.minor
+            and self.patch == other.patch
+            and self.prerelease == other.prerelease
+        )
 
     def __lt__(self, other) -> bool:
         """Compare versions (build metadata ignored per semver spec)."""

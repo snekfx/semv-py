@@ -8,7 +8,7 @@ import sys
 import pytest
 
 # Add src to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
 from semvx.core.version import (
     SemanticVersion,
@@ -66,15 +66,7 @@ class TestSemanticVersionParsing:
 
     def test_parse_invalid_versions(self):
         """Test that invalid versions raise VersionParseError."""
-        invalid_versions = [
-            "",
-            "1.2",
-            "1.2.3.4",
-            "v1.2.x",
-            "1.2.3-",
-            "1.2.3+",
-            "invalid"
-        ]
+        invalid_versions = ["", "1.2", "1.2.3.4", "v1.2.x", "1.2.3-", "1.2.3+", "invalid"]
 
         for invalid_version in invalid_versions:
             with pytest.raises(VersionParseError):
@@ -101,7 +93,7 @@ class TestSemanticVersionComparison:
             SemanticVersion.parse("1.0.0"),
             SemanticVersion.parse("1.0.1"),
             SemanticVersion.parse("1.1.0"),
-            SemanticVersion.parse("2.0.0")
+            SemanticVersion.parse("2.0.0"),
         ]
 
         # Test ascending order
@@ -168,7 +160,7 @@ class TestSemanticVersionBumping:
         bumped = original.bump_major()
 
         assert original.major == 1  # Original unchanged
-        assert bumped.major == 2    # New instance
+        assert bumped.major == 2  # New instance
 
 
 class TestSemanticVersionFormatting:

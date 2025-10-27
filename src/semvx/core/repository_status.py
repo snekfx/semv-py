@@ -15,6 +15,7 @@ from semvx.core.version import SemanticVersion, VersionParseError
 @dataclass
 class RepositoryStatus:
     """Comprehensive repository status information."""
+
     user: str
     repo_name: str
     current_branch: str
@@ -64,7 +65,7 @@ class RepositoryAnalyzer:
             current_version=self._get_current_version(),
             next_version=self._calculate_next_version(),
             package_version=self._get_package_version(),
-            pending_actions=self._analyze_pending_actions()
+            pending_actions=self._analyze_pending_actions(),
         )
 
     def _get_user(self) -> str:
@@ -75,7 +76,7 @@ class RepositoryAnalyzer:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return result.stdout.strip() or "unknown"
         except subprocess.CalledProcessError:
@@ -89,13 +90,13 @@ class RepositoryAnalyzer:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=False
+                check=False,
             )
             if result.returncode == 0:
                 url = result.stdout.strip()
                 if url:
-                    name = url.rstrip('/').split('/')[-1]
-                    return name.replace('.git', '')
+                    name = url.rstrip("/").split("/")[-1]
+                    return name.replace(".git", "")
         except subprocess.CalledProcessError:
             pass
         return self.repo_path.name
@@ -113,7 +114,7 @@ class RepositoryAnalyzer:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             branches = result.stdout
             if "origin/main" in branches:
@@ -132,9 +133,9 @@ class RepositoryAnalyzer:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
-            lines = [line for line in result.stdout.strip().split('\n') if line]
+            lines = [line for line in result.stdout.strip().split("\n") if line]
             return len(lines)
         except subprocess.CalledProcessError:
             return 0
@@ -147,7 +148,7 @@ class RepositoryAnalyzer:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return int(result.stdout.strip())
         except (subprocess.CalledProcessError, ValueError):
@@ -168,7 +169,7 @@ class RepositoryAnalyzer:
                     cwd=self.repo_path,
                     capture_output=True,
                     check=False,
-                    timeout=5  # Add timeout to prevent hanging
+                    timeout=5,  # Add timeout to prevent hanging
                 )
 
             # Try to get remote build count without fetching
@@ -178,7 +179,7 @@ class RepositoryAnalyzer:
                 capture_output=True,
                 text=True,
                 check=False,
-                timeout=2
+                timeout=2,
             )
             if result.returncode == 0:
                 return int(result.stdout.strip())
@@ -194,7 +195,7 @@ class RepositoryAnalyzer:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             timestamp = int(result.stdout.strip())
             commit_date = datetime.fromtimestamp(timestamp)
@@ -211,7 +212,7 @@ class RepositoryAnalyzer:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return result.stdout.strip() or None
         except subprocess.CalledProcessError:

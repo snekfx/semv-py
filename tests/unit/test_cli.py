@@ -9,7 +9,7 @@ from unittest.mock import patch
 import pytest
 
 # Add src to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
 from semvx.cli.main import do_detection, do_status, main, print_help
 
@@ -19,7 +19,7 @@ class TestCLIMain:
 
     def test_version_flag(self, capsys):
         """Test --version flag output."""
-        with patch.object(sys, 'argv', ['semvx', '--version']):
+        with patch.object(sys, "argv", ["semvx", "--version"]):
             main()
         captured = capsys.readouterr()
         assert "semvx 3.0.0-dev" in captured.out
@@ -27,7 +27,7 @@ class TestCLIMain:
 
     def test_help_flag(self, capsys):
         """Test --help flag output."""
-        with patch.object(sys, 'argv', ['semvx', '--help']):
+        with patch.object(sys, "argv", ["semvx", "--help"]):
             main()
         captured = capsys.readouterr()
         assert "USAGE:" in captured.out
@@ -37,41 +37,37 @@ class TestCLIMain:
 
     def test_no_arguments(self, capsys):
         """Test behavior with no arguments."""
-        with patch.object(sys, 'argv', ['semvx']):
+        with patch.object(sys, "argv", ["semvx"]):
             main()
         captured = capsys.readouterr()
         assert "semvx 3.0.0-dev" in captured.out
         assert "Use 'semvx --help'" in captured.out
 
-    @patch('semvx.cli.main.do_detection')
+    @patch("semvx.cli.main.do_detection")
     def test_detect_command(self, mock_detect):
         """Test detect command routing."""
-        with patch.object(sys, 'argv', ['semvx', 'detect']):
+        with patch.object(sys, "argv", ["semvx", "detect"]):
             main()
         mock_detect.assert_called_once()
 
-    @patch('semvx.cli.main.do_status')
+    @patch("semvx.cli.main.do_status")
     def test_status_command(self, mock_status):
         """Test status command routing."""
-        with patch.object(sys, 'argv', ['semvx', 'status']):
+        with patch.object(sys, "argv", ["semvx", "status"]):
             main()
         mock_status.assert_called_once()
 
-    @patch('semvx.cli.main.get_repository_context')
+    @patch("semvx.cli.main.get_repository_context")
     def test_bump_command(self, mock_get_context, capsys):
         """Test bump command with version calculation."""
         mock_context = {
-            'repository': {'type': 'git', 'root': '/test'},
-            'projects': [{
-                'type': 'python',
-                'version': '1.2.3',
-                'version_file': 'pyproject.toml'
-            }],
-            'validation': {}
+            "repository": {"type": "git", "root": "/test"},
+            "projects": [{"type": "python", "version": "1.2.3", "version_file": "pyproject.toml"}],
+            "validation": {},
         }
         mock_get_context.return_value = mock_context
 
-        with patch.object(sys, 'argv', ['semvx', 'bump', 'minor']):
+        with patch.object(sys, "argv", ["semvx", "bump", "minor"]):
             main()
         captured = capsys.readouterr()
         assert "bumping minor version" in captured.out.lower()
@@ -82,21 +78,13 @@ class TestCLIMain:
 class TestDetectionCommand:
     """Test detection command functionality."""
 
-    @patch('semvx.cli.main.get_repository_context')
+    @patch("semvx.cli.main.get_repository_context")
     def test_do_detection_success(self, mock_get_context, capsys):
         """Test successful project detection."""
         mock_context = {
-            'repository': {'type': 'git'},
-            'projects': [
-                {
-                    'type': 'python',
-                    'version': '1.2.3',
-                    'version_file': 'pyproject.toml'
-                }
-            ],
-            'validation': {
-                'python': {'ok': True}
-            }
+            "repository": {"type": "git"},
+            "projects": [{"type": "python", "version": "1.2.3", "version_file": "pyproject.toml"}],
+            "validation": {"python": {"ok": True}},
         }
         mock_get_context.return_value = mock_context
 
@@ -109,7 +97,7 @@ class TestDetectionCommand:
         assert "python" in captured.out.lower()
         assert "1.2.3" in captured.out
 
-    @patch('semvx.cli.main.get_repository_context')
+    @patch("semvx.cli.main.get_repository_context")
     def test_do_detection_error(self, mock_get_context, capsys):
         """Test detection with error."""
         mock_get_context.side_effect = Exception("Test error")
@@ -126,7 +114,7 @@ class TestDetectionCommand:
 class TestStatusCommand:
     """Test status command functionality."""
 
-    @patch('semvx.cli.main.RepositoryAnalyzer')
+    @patch("semvx.cli.main.RepositoryAnalyzer")
     def test_do_status_with_repository(self, mock_analyzer_class, capsys):
         """Test status display with repository."""
         from semvx.core.repository_status import RepositoryStatus
@@ -148,7 +136,7 @@ class TestStatusCommand:
             current_version="v1.0.0",
             next_version="v1.1.0",
             package_version="1.0.0",
-            pending_actions=["5 changes pending commit"]
+            pending_actions=["5 changes pending commit"],
         )
 
         # Mock the analyzer
@@ -157,6 +145,7 @@ class TestStatusCommand:
 
         # Set environment to use plain mode for easier testing
         import os
+
         os.environ["SEMVX_USE_BOXY"] = "false"
 
         do_status()
@@ -170,7 +159,7 @@ class TestStatusCommand:
         assert "test-repo" in captured.out
         assert "5 changes pending commit" in captured.out
 
-    @patch('semvx.cli.main.RepositoryAnalyzer')
+    @patch("semvx.cli.main.RepositoryAnalyzer")
     def test_do_status_data_mode(self, mock_analyzer_class, capsys):
         """Test status display in data mode (JSON)."""
         import json
@@ -193,7 +182,7 @@ class TestStatusCommand:
             current_version="v1.0.0",
             next_version="v1.0.0",
             package_version="1.0.0",
-            pending_actions=[]
+            pending_actions=[],
         )
 
         mock_analyzer = mock_analyzer_class.return_value
@@ -201,6 +190,7 @@ class TestStatusCommand:
 
         # Set data view mode
         import os
+
         os.environ["SEMVX_VIEW"] = "data"
 
         do_status()

@@ -14,6 +14,7 @@ from semvx.core.version import SemanticVersion
 
 class GitError(Exception):
     """Raised when git operations fail."""
+
     pass
 
 
@@ -46,7 +47,7 @@ class GitRepository:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=False
+                check=False,
             )
             return result.returncode == 0
         except FileNotFoundError:
@@ -60,7 +61,7 @@ class GitRepository:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return result.stdout.strip()
         except subprocess.CalledProcessError as e:
@@ -74,7 +75,7 @@ class GitRepository:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=False
+                check=False,
             )
             if result.returncode == 0:
                 return result.stdout.strip()
@@ -98,11 +99,7 @@ class GitRepository:
                 cmd.append(pattern)
 
             result = subprocess.run(
-                cmd,
-                cwd=self.repo_path,
-                capture_output=True,
-                text=True,
-                check=True
+                cmd, cwd=self.repo_path, capture_output=True, text=True, check=True
             )
             tags = result.stdout.strip().split("\n")
             return [t for t in tags if t]  # Filter empty strings
@@ -117,7 +114,7 @@ class GitRepository:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=False
+                check=False,
             )
             return result.returncode == 0
         except subprocess.CalledProcessError:
@@ -127,11 +124,7 @@ class GitRepository:
         """Check if repository has a remote configured."""
         try:
             result = subprocess.run(
-                ["git", "remote"],
-                cwd=self.repo_path,
-                capture_output=True,
-                text=True,
-                check=True
+                ["git", "remote"], cwd=self.repo_path, capture_output=True, text=True, check=True
             )
             return bool(result.stdout.strip())
         except subprocess.CalledProcessError:
@@ -153,7 +146,7 @@ class GitRepository:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return True, f"Fetched tags from {remote}"
         except subprocess.CalledProcessError as e:
@@ -177,7 +170,7 @@ class GitRepository:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             if not result.stdout.strip():
@@ -223,9 +216,7 @@ class GitRepository:
         except subprocess.CalledProcessError as e:
             raise GitError(f"Failed to get remote tags: {e.stderr.strip() if e.stderr else str(e)}")
 
-    def compare_with_remote(
-        self, local_tag: str, remote_tag: str
-    ) -> Tuple[str, str]:
+    def compare_with_remote(self, local_tag: str, remote_tag: str) -> Tuple[str, str]:
         """
         Compare local and remote tags.
 
@@ -258,10 +249,7 @@ class GitRepository:
                 return "diverged", f"Cannot compare: {local_tag} vs {remote_tag}"
 
     def create_tag(
-        self,
-        tag_name: str,
-        message: Optional[str] = None,
-        force: bool = False
+        self, tag_name: str, message: Optional[str] = None, force: bool = False
     ) -> Tuple[bool, str]:
         """
         Create a git tag.
@@ -285,13 +273,7 @@ class GitRepository:
             else:
                 cmd.append(tag_name)
 
-            subprocess.run(
-                cmd,
-                cwd=self.repo_path,
-                capture_output=True,
-                text=True,
-                check=True
-            )
+            subprocess.run(cmd, cwd=self.repo_path, capture_output=True, text=True, check=True)
 
             return True, f"Created tag '{tag_name}'"
 
@@ -315,7 +297,7 @@ class GitRepository:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return True, f"Deleted tag '{tag_name}'"
         except subprocess.CalledProcessError as e:
@@ -330,7 +312,7 @@ class GitRepository:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return bool(result.stdout.strip())
         except subprocess.CalledProcessError as e:
@@ -353,19 +335,14 @@ class GitRepository:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return True, f"Staged {len(files)} file(s)"
         except subprocess.CalledProcessError as e:
             error_msg = e.stderr.strip() if e.stderr else str(e)
             return False, f"Failed to stage files: {error_msg}"
 
-    def commit(
-        self,
-        message: str,
-        amend: bool = False,
-        no_edit: bool = False
-    ) -> Tuple[bool, str]:
+    def commit(self, message: str, amend: bool = False, no_edit: bool = False) -> Tuple[bool, str]:
         """
         Create a git commit.
 
@@ -385,13 +362,7 @@ class GitRepository:
                 if no_edit:
                     cmd.append("--no-edit")
 
-            subprocess.run(
-                cmd,
-                cwd=self.repo_path,
-                capture_output=True,
-                text=True,
-                check=True
-            )
+            subprocess.run(cmd, cwd=self.repo_path, capture_output=True, text=True, check=True)
 
             return True, "Commit created successfully"
 
@@ -407,7 +378,7 @@ class GitRepository:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return result.stdout.strip()
         except subprocess.CalledProcessError:
@@ -423,7 +394,7 @@ class GitVersionTagger:
         version: SemanticVersion,
         prefix: str = "v",
         message: Optional[str] = None,
-        force: bool = False
+        force: bool = False,
     ) -> Tuple[bool, str]:
         """
         Create a semantic version tag.

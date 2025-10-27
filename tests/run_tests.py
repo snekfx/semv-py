@@ -10,6 +10,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+
 def run_basic_tests():
     """Run basic tests to validate functionality."""
     print("Running SEMVX Basic Tests")
@@ -24,6 +25,7 @@ def run_basic_tests():
             get_repository_context,
             normalize_semver,
         )
+
         print("   ✅ Detection module imports successful")
     except ImportError as e:
         print(f"   ❌ Import failed: {e}")
@@ -31,6 +33,7 @@ def run_basic_tests():
 
     try:
         from semvx.cli.main import main  # noqa: F401
+
         print("   ✅ CLI module imports successful")
     except ImportError as e:
         print(f"   ❌ Import failed: {e}")
@@ -72,7 +75,7 @@ def run_basic_tests():
         context = get_repository_context(repo_path)
         print(f"   ✅ Repository type: {context['repository']['type']}")
         print(f"   ✅ Projects found: {len(context['projects'])}")
-        for project in context['projects']:
+        for project in context["projects"]:
             print(f"      - {project['type']}: {project.get('version', 'N/A')}")
     except Exception as e:
         print(f"   ❌ Context detection failed: {e}")
@@ -84,8 +87,8 @@ def run_basic_tests():
     from unittest.mock import patch
 
     # Test help output
-    with patch('sys.stdout', new=StringIO()) as fake_out:
-        with patch.object(sys, 'argv', ['semvx', '--help']):
+    with patch("sys.stdout", new=StringIO()) as fake_out:
+        with patch.object(sys, "argv", ["semvx", "--help"]):
             try:
                 main()
                 output = fake_out.getvalue()
@@ -98,8 +101,8 @@ def run_basic_tests():
                 pass  # --help causes exit, that's ok
 
     # Test version output
-    with patch('sys.stdout', new=StringIO()) as fake_out:
-        with patch.object(sys, 'argv', ['semvx', '--version']):
+    with patch("sys.stdout", new=StringIO()) as fake_out:
+        with patch.object(sys, "argv", ["semvx", "--version"]):
             main()
             output = fake_out.getvalue()
             if "3.0.0-dev" in output:

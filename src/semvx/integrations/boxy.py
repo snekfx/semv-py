@@ -47,7 +47,7 @@ def render_with_boxy(
     theme: str = "info",
     title: Optional[str] = None,
     style: str = "normal",
-    width: Optional[int] = None
+    width: Optional[int] = None,
 ) -> str:
     """
     Render content with boxy.
@@ -74,13 +74,7 @@ def render_with_boxy(
         if width:
             cmd.extend(["--width", str(width)])
 
-        result = subprocess.run(
-            cmd,
-            input=content,
-            capture_output=True,
-            text=True,
-            check=True
-        )
+        result = subprocess.run(cmd, input=content, capture_output=True, text=True, check=True)
 
         return result.stdout
 
@@ -172,4 +166,5 @@ def format_status_as_data(status_data: dict) -> str:
         JSON-like formatted string
     """
     import json
+
     return json.dumps(status_data, indent=2)

@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Union
 @dataclass
 class ProjectInfo:
     """Information about a detected project."""
+
     type: str  # "rust", "javascript", "python", "bash", "unknown"
     root: str  # Relative path from repo root
     version_file: Optional[str]  # Relative path to version file
@@ -19,6 +20,7 @@ class ProjectInfo:
 @dataclass
 class RepositoryContext:
     """Complete repository analysis context."""
+
     repository: Dict[str, Union[str, bool, None]]
     projects: List[ProjectInfo]
     tools: Dict[str, Dict[str, Union[bool, str, List[str]]]]
@@ -33,6 +35,7 @@ class RepositoryContext:
 @dataclass
 class ValidationResult:
     """Result of project validation."""
+
     ok: bool
     reason: Optional[str] = None
     version: Optional[str] = None

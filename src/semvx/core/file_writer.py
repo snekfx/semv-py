@@ -14,6 +14,7 @@ from semvx.core.version import SemanticVersion
 
 class FileWriteError(Exception):
     """Raised when file writing operations fail."""
+
     pass
 
 
@@ -29,9 +30,7 @@ class VersionFileWriter:
 
     @staticmethod
     def update_version_in_file(
-        file_path: Path,
-        new_version: SemanticVersion,
-        backup: bool = True
+        file_path: Path, new_version: SemanticVersion, backup: bool = True
     ) -> Tuple[bool, str]:
         """
         Update version in a manifest file.
@@ -74,9 +73,7 @@ class VersionFileWriter:
 
     @staticmethod
     def _update_pyproject_toml(
-        file_path: Path,
-        new_version: SemanticVersion,
-        backup: bool
+        file_path: Path, new_version: SemanticVersion, backup: bool
     ) -> Tuple[bool, str]:
         """Update version in pyproject.toml."""
         try:
@@ -95,13 +92,7 @@ class VersionFileWriter:
                 VersionFileWriter._create_backup(file_path)
 
             # Replace version line
-            updated_content = re.sub(
-                pattern,
-                new_line,
-                content,
-                count=1,
-                flags=re.MULTILINE
-            )
+            updated_content = re.sub(pattern, new_line, content, count=1, flags=re.MULTILINE)
 
             # Write updated content
             file_path.write_text(updated_content)
@@ -113,9 +104,7 @@ class VersionFileWriter:
 
     @staticmethod
     def _update_cargo_toml(
-        file_path: Path,
-        new_version: SemanticVersion,
-        backup: bool
+        file_path: Path, new_version: SemanticVersion, backup: bool
     ) -> Tuple[bool, str]:
         """Update version in Cargo.toml."""
         try:
@@ -131,13 +120,7 @@ class VersionFileWriter:
             if backup:
                 VersionFileWriter._create_backup(file_path)
 
-            updated_content = re.sub(
-                pattern,
-                new_line,
-                content,
-                count=1,
-                flags=re.MULTILINE
-            )
+            updated_content = re.sub(pattern, new_line, content, count=1, flags=re.MULTILINE)
 
             file_path.write_text(updated_content)
 
@@ -148,9 +131,7 @@ class VersionFileWriter:
 
     @staticmethod
     def _update_package_json(
-        file_path: Path,
-        new_version: SemanticVersion,
-        backup: bool
+        file_path: Path, new_version: SemanticVersion, backup: bool
     ) -> Tuple[bool, str]:
         """Update version in package.json."""
         try:

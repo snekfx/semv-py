@@ -17,7 +17,7 @@ class TestCommitClassification:
             "breaking: remove deprecated API",
             "api: change interface",
             "arch: restructure modules",
-            "ux: redesign interface"
+            "ux: redesign interface",
         ]
 
         for commit in major_commits:
@@ -33,7 +33,7 @@ class TestCommitClassification:
             "add: new command",
             "minor: small addition",
             "ref: refactor module",
-            "mrg: merge feature branch"
+            "mrg: merge feature branch",
         ]
 
         for commit in minor_commits:
@@ -51,7 +51,7 @@ class TestCommitClassification:
             "up: update dependencies",
             "imp: improve performance",
             "qol: better error messages",
-            "stb: mark as stable"
+            "stb: mark as stable",
         ]
 
         for commit in patch_commits:
@@ -71,7 +71,7 @@ class TestCommitClassification:
             "admin: update team info",
             "lic: update copyright",
             "clean: remove old files",
-            "x: temporary debug"
+            "x: temporary debug",
         ]
 
         for commit in ignored_commits:
@@ -86,7 +86,7 @@ class TestCommitClassification:
 class TestCommitAnalysis:
     """Test commit analysis functionality."""
 
-    @patch('semvx.core.commit_analyzer.subprocess.run')
+    @patch("semvx.core.commit_analyzer.subprocess.run")
     def test_analyze_major_bump(self, mock_run, git_repository):
         """Test analysis recommends major bump."""
         mock_run.return_value.stdout = "breaking: remove API\nfeat: add feature\nfix: bug\n"
@@ -100,7 +100,7 @@ class TestCommitAnalysis:
         assert len(analysis.minor_commits) == 1
         assert len(analysis.patch_commits) == 1
 
-    @patch('semvx.core.commit_analyzer.subprocess.run')
+    @patch("semvx.core.commit_analyzer.subprocess.run")
     def test_analyze_minor_bump(self, mock_run, git_repository):
         """Test analysis recommends minor bump."""
         mock_run.return_value.stdout = "feat: new feature\nfix: bug fix\ndoc: update docs\n"
@@ -114,7 +114,7 @@ class TestCommitAnalysis:
         assert len(analysis.patch_commits) == 1
         assert len(analysis.ignored_commits) == 1
 
-    @patch('semvx.core.commit_analyzer.subprocess.run')
+    @patch("semvx.core.commit_analyzer.subprocess.run")
     def test_analyze_patch_bump(self, mock_run, git_repository):
         """Test analysis recommends patch bump."""
         mock_run.return_value.stdout = "fix: bug\ndoc: docs\n"
@@ -126,7 +126,7 @@ class TestCommitAnalysis:
         assert analysis.bump_type == BumpType.PATCH
         assert len(analysis.patch_commits) == 1
 
-    @patch('semvx.core.commit_analyzer.subprocess.run')
+    @patch("semvx.core.commit_analyzer.subprocess.run")
     def test_get_suggested_bump_with_reasoning(self, mock_run, git_repository):
         """Test getting suggested bump with reasoning."""
         mock_run.return_value.stdout = "feat: feature 1\nfeat: feature 2\nfix: bug\n"
@@ -150,7 +150,7 @@ class TestCommitAnalysis:
             minor_commits=["feat: feature 1", "feat: feature 2"],
             patch_commits=["fix: bug"],
             dev_commits=[],
-            ignored_commits=["doc: update"]
+            ignored_commits=["doc: update"],
         )
 
         analyzer = CommitAnalyzer(git_repository)

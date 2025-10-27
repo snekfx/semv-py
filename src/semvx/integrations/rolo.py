@@ -151,9 +151,7 @@ def format_as_columns(
         return _format_columns_fallback(items, cols)
 
 
-def _format_table_fallback(
-    data: List[List[str]], headers: Optional[List[str]] = None
-) -> str:
+def _format_table_fallback(data: List[List[str]], headers: Optional[List[str]] = None) -> str:
     """Fallback table formatting without rolo."""
     lines = []
 
@@ -168,16 +166,12 @@ def _format_table_fallback(
 
     # Format rows
     if headers:
-        header_line = "  ".join(
-            str(cell).ljust(width) for cell, width in zip(headers, col_widths)
-        )
+        header_line = "  ".join(str(cell).ljust(width) for cell, width in zip(headers, col_widths))
         lines.append(header_line)
         lines.append("-" * len(header_line))
 
     for row in data:
-        row_line = "  ".join(
-            str(cell).ljust(width) for cell, width in zip(row, col_widths)
-        )
+        row_line = "  ".join(str(cell).ljust(width) for cell, width in zip(row, col_widths))
         lines.append(row_line)
 
     return "\n".join(lines)

@@ -15,11 +15,13 @@ class TestVersionFileWriter:
         """Test updating version in pyproject.toml."""
         # Create test file
         pyproject = tmp_path / "pyproject.toml"
-        pyproject.write_text("""[project]
+        pyproject.write_text(
+            """[project]
 name = "test-project"
 version = "1.2.3"
 description = "Test project"
-""")
+"""
+        )
 
         new_version = SemanticVersion(2, 0, 0)
         success, message = VersionFileWriter.update_version_in_file(
@@ -37,15 +39,15 @@ description = "Test project"
     def test_update_pyproject_toml_with_backup(self, tmp_path):
         """Test backup creation when updating pyproject.toml."""
         pyproject = tmp_path / "pyproject.toml"
-        pyproject.write_text("""[project]
+        pyproject.write_text(
+            """[project]
 name = "test"
 version = "1.0.0"
-""")
+"""
+        )
 
         new_version = SemanticVersion(1, 1, 0)
-        success, _ = VersionFileWriter.update_version_in_file(
-            pyproject, new_version, backup=True
-        )
+        success, _ = VersionFileWriter.update_version_in_file(pyproject, new_version, backup=True)
 
         assert success
 
@@ -57,11 +59,13 @@ version = "1.0.0"
     def test_update_cargo_toml(self, tmp_path):
         """Test updating version in Cargo.toml."""
         cargo = tmp_path / "Cargo.toml"
-        cargo.write_text("""[package]
+        cargo.write_text(
+            """[package]
 name = "test-crate"
 version = "0.1.0"
 edition = "2021"
-""")
+"""
+        )
 
         new_version = SemanticVersion(0, 2, 0)
         success, message = VersionFileWriter.update_version_in_file(
@@ -77,11 +81,7 @@ edition = "2021"
     def test_update_package_json(self, tmp_path):
         """Test updating version in package.json."""
         package = tmp_path / "package.json"
-        data = {
-            "name": "test-package",
-            "version": "1.0.0",
-            "description": "Test"
-        }
+        data = {"name": "test-package", "version": "1.0.0", "description": "Test"}
         package.write_text(json.dumps(data, indent=2))
 
         new_version = SemanticVersion(1, 5, 0)
@@ -103,9 +103,7 @@ edition = "2021"
         pyproject.write_text('[project]\nversion = "1.0.0"\n')
 
         new_version = SemanticVersion(2, 0, 0, prerelease="alpha.1")
-        success, _ = VersionFileWriter.update_version_in_file(
-            pyproject, new_version, backup=False
-        )
+        success, _ = VersionFileWriter.update_version_in_file(pyproject, new_version, backup=False)
 
         assert success
         content = pyproject.read_text()
@@ -117,9 +115,7 @@ edition = "2021"
         new_version = SemanticVersion(1, 0, 0)
 
         with pytest.raises(FileWriteError, match="File not found"):
-            VersionFileWriter.update_version_in_file(
-                nonexistent, new_version, backup=False
-            )
+            VersionFileWriter.update_version_in_file(nonexistent, new_version, backup=False)
 
     def test_unsupported_file_type(self, tmp_path):
         """Test handling of unsupported file types."""
@@ -155,6 +151,4 @@ edition = "2021"
         new_version = SemanticVersion(1, 0, 0)
 
         with pytest.raises(FileWriteError, match="Invalid JSON"):
-            VersionFileWriter.update_version_in_file(
-                package, new_version, backup=False
-            )
+            VersionFileWriter.update_version_in_file(package, new_version, backup=False)

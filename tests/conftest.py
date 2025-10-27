@@ -71,9 +71,7 @@ def javascript_project(temp_dir):
         "version": "3.4.5",
         "description": "Test JavaScript project",
         "main": "index.js",
-        "scripts": {
-            "test": "echo 'Test'"
-        }
+        "scripts": {"test": "echo 'Test'"},
     }
     (temp_dir / "package.json").write_text(json.dumps(package_json, indent=2))
     (temp_dir / "index.js").write_text('console.log("Hello");')
@@ -88,7 +86,9 @@ def git_repository(temp_dir):
 
     # Initialize git repo
     subprocess.run(["git", "init"], cwd=temp_dir, capture_output=True)
-    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=temp_dir, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"], cwd=temp_dir, capture_output=True
+    )
     subprocess.run(["git", "config", "user.name", "Test User"], cwd=temp_dir, capture_output=True)
 
     # Create and commit a file
@@ -122,10 +122,7 @@ edition = "2021"
     # JavaScript subproject
     js_dir = temp_dir / "js-frontend"
     js_dir.mkdir()
-    package_json = {
-        "name": "js-frontend",
-        "version": "1.0.0"
-    }
+    package_json = {"name": "js-frontend", "version": "1.0.0"}
     (js_dir / "package.json").write_text(json.dumps(package_json, indent=2))
 
     return temp_dir
