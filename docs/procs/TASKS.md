@@ -318,10 +318,11 @@
   - Thread pool or asyncio for independent language scanners
   - Guard with feature flag
   - Validate 10x performance target
-- [ ] **QOL-DET-01**: Live repository metadata (2 SP)
-  - Replace placeholder metadata with live values
-  - Add fallbacks for missing data
-  - Support Boxy/GitSim integrations
+- [x] **QOL-DET-01**: Live repository metadata (2 SP) - DONE ✅
+  - ✅ Replaced placeholders with live git data (branch, clean status, commit info)
+  - ✅ NDSR-compliant with 2s timeouts per operation
+  - ✅ Graceful fallbacks on git operation failures
+  - ✅ Live timestamps with timezone-aware datetime
 - [ ] **TEST-DET-01**: Improve detection test coverage (3 SP)
   - Add coverage for edge cases
   - Lock regression fixes with tests
