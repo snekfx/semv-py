@@ -318,6 +318,27 @@ class GitRepository:
         except subprocess.CalledProcessError as e:
             raise GitError(f"Failed to check git status: {e}")
 
+    def get_changed_files_count(self) -> int:
+        """
+        Get count of changed files in working tree.
+
+        Returns:
+            Number of changed files (staged + unstaged)
+        """
+        try:
+            result = subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=self.repo_path,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            # Each line in porcelain output represents one changed file
+            lines = result.stdout.strip().split("\n") if result.stdout.strip() else []
+            return len(lines)
+        except subprocess.CalledProcessError as e:
+            raise GitError(f"Failed to check git status: {e}")
+
     def stage_files(self, files: List[Path]) -> Tuple[bool, str]:
         """
         Stage files for commit.

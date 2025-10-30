@@ -164,6 +164,10 @@ def main():
         do_new_command()
         return
 
+    if len(sys.argv) > 1 and sys.argv[1] == "gs":
+        do_gs_command()
+        return
+
     # Default: show help
     print_help()
 
@@ -198,6 +202,7 @@ COMMANDS:
     set TYPE VER [FILE] Set version in project files
     sync [FILE]         Synchronize versions across all project files
     new                 Initialize repository with v0.0.1 tag
+    gs                  Show count of changed files in working tree
     bc                  Show current build count (total commits)
     build [FILE]        Generate build info file (default: .build_info)
     fetch               Fetch remote tags
@@ -1683,6 +1688,29 @@ def do_audit_command():
 
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def do_gs_command():
+    """Show count of changed files in working tree (git status)."""
+    try:
+        repo_path = Path.cwd()
+        repo = GitRepository(repo_path)
+
+        # Get count of changed files
+        count = repo.get_changed_files_count()
+
+        # Output just the number (for scripting)
+        print(count)
+
+        # Exit code: 0 if changes exist, 1 if clean (matches bash semv behavior)
+        sys.exit(0 if count > 0 else 1)
+
+    except GitError as e:
+        print(f"❌ Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}", file=sys.stderr)
         sys.exit(1)
 
 
