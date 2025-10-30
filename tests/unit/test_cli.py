@@ -22,8 +22,9 @@ class TestCLIMain:
         with patch.object(sys, "argv", ["semvx", "--version"]):
             main()
         captured = capsys.readouterr()
-        assert "semvx 3.0.0-dev" in captured.out
-        assert "Python rewrite" in captured.out
+        # Should output version from pyproject.toml
+        assert "semvx" in captured.out
+        assert "1.3.0" in captured.out
 
     def test_help_flag(self, capsys):
         """Test --help flag output."""
@@ -40,7 +41,8 @@ class TestCLIMain:
         with patch.object(sys, "argv", ["semvx"]):
             main()
         captured = capsys.readouterr()
-        assert "semvx 3.0.0-dev" in captured.out
+        # Should show version from pyproject.toml and help message
+        assert "semvx 1.3.0" in captured.out
         assert "Use 'semvx --help'" in captured.out
 
     @patch("semvx.cli.main.do_detection")
