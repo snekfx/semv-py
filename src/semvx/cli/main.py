@@ -176,6 +176,10 @@ def main():
         do_can_command()
         return
 
+    if len(sys.argv) > 1 and sys.argv[1] in ["since", "last"]:
+        do_since_command()
+        return
+
     # Default: show help
     print_help()
 
@@ -213,6 +217,7 @@ COMMANDS:
     can                 Check if repository can use semantic versioning
     gs                  Show count of changed files in working tree
     pend [LABEL]        Show pending commits since last tag (optional: feat, fix, etc.)
+    since               Show time since last commit
     bc                  Show current build count (total commits)
     build [FILE]        Generate build info file (default: .build_info)
     fetch               Fetch remote tags
@@ -1753,9 +1758,7 @@ def do_pend_command():
             # Show all commits
             cmd = ["git", "log", f"{latest_tag}..HEAD", "--format=%h - %s"]
 
-        result = subprocess.run(
-            cmd, cwd=repo_path, capture_output=True, text=True, check=False
-        )
+        result = subprocess.run(cmd, cwd=repo_path, capture_output=True, text=True, check=False)
 
         if result.returncode != 0:
             print(f"❌ Git error: {result.stderr.strip()}", file=sys.stderr)
@@ -1836,12 +1839,69 @@ def do_can_command():
             print("\n✓ Repository is ready for semantic versioning", file=sys.stderr)
             sys.exit(0)
         else:
-            print(f"\n✗ Repository is not ready for semantic versioning ({issues} issues)", file=sys.stderr)
+            print(
+                f"\n✗ Repository is not ready for semantic versioning ({issues} issues)",
+                file=sys.stderr,
+            )
             print("  Fix the issues above and try again", file=sys.stderr)
             sys.exit(1)
 
     except Exception as e:
         print(f"❌ Unexpected error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def do_since_command():
+    """Show time since last commit."""
+    try:
+        repo_path = Path.cwd()
+
+        # Use git log to get relative time (git formats it nicely)
+        result = subprocess.run(
+            ["git", "log", "-1", "--format=%cr"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        if result.returncode != 0:
+            print("❌ Not a git repository", file=sys.stderr)
+            sys.exit(1)
+
+        time_ago = result.stdout.strip()
+
+        if not time_ago:
+            print("❌ No commits found", file=sys.stderr)
+            sys.exit(1)
+
+        # Get days for color coding
+        result_days = subprocess.run(
+            ["git", "log", "-1", "--format=%ct"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        from datetime import datetime
+
+        commit_timestamp = int(result_days.stdout.strip())
+        now_timestamp = int(datetime.now().timestamp())
+        days_ago = (now_timestamp - commit_timestamp) / 86400
+
+        # Color coding based on days (bash semv: green <7, yellow <30, red >=30)
+        if days_ago < 7:
+            print(f"✓ Last commit was {time_ago}", file=sys.stderr)
+        elif days_ago < 30:
+            print(f"⚠ Last commit was {time_ago}", file=sys.stderr)
+        else:
+            print(f"✗ Last commit was {time_ago}", file=sys.stderr)
+
+        sys.exit(0)
+
+    except Exception as e:
+        print(f"❌ Error: {e}", file=sys.stderr)
         sys.exit(1)
 
 
