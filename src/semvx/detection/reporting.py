@@ -41,7 +41,7 @@ def validate_project_structure(
         }
     """
     repo_path = Path(repo_path).resolve()
-    validation = {}
+    validation: Dict[str, Dict[str, Union[bool, str, None]]] = {}
 
     for project in projects:
         project_type = project["type"]
@@ -103,7 +103,7 @@ def detect_standard_bin_tools(repo_path: Path) -> Dict[str, Dict[str, Union[bool
     """
     repo_path = Path(repo_path).resolve()
     standard_tools = ["build.sh", "deploy.sh", "test.sh", "snap.sh"]
-    tools = {}
+    tools: Dict[str, Dict[str, Union[bool, str]]] = {}
 
     for tool in standard_tools:
         # Standard tools MUST be in ./bin/ directory
@@ -116,7 +116,9 @@ def detect_standard_bin_tools(repo_path: Path) -> Dict[str, Dict[str, Union[bool
     return tools
 
 
-def detect_emerging_tools(repo_path: Path) -> Dict[str, Union[bool, List[str]]]:
+def detect_emerging_tools(
+    repo_path: Path,
+) -> Dict[str, Union[bool, List[str], Dict[str, Union[bool, str]]]]:
     """
     Detect emerging development tools and patterns.
 
@@ -131,7 +133,7 @@ def detect_emerging_tools(repo_path: Path) -> Dict[str, Union[bool, List[str]]]:
         Dictionary of emerging tool detection results
     """
     repo_path = Path(repo_path).resolve()
-    emerging = {}
+    emerging: Dict[str, Union[bool, List[str], Dict[str, Union[bool, str]]]] = {}
 
     # Check for Makefile
     makefile_exists = (repo_path / "Makefile").exists() or (repo_path / "makefile").exists()

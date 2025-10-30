@@ -165,7 +165,9 @@ def check_gitsim_availability() -> bool:
     return shutil.which("gitsim") is not None
 
 
-def validate_gitsim_environment(repo_path: Path) -> Dict[str, Union[bool, str, None]]:
+def validate_gitsim_environment(
+    repo_path: Path,
+) -> Dict[str, Union[bool, str, None, Dict[str, object]]]:
     """
     Complete GitSim environment validation and metadata extraction.
 
@@ -179,7 +181,7 @@ def validate_gitsim_environment(repo_path: Path) -> Dict[str, Union[bool, str, N
     is_gitsim = (repo_path / ".gitsim").exists()
     gitsim_available = check_gitsim_availability()
 
-    result = {
+    result: Dict[str, Union[bool, str, None, Dict[str, object]]] = {
         "is_gitsim": is_gitsim,
         "gitsim_available": gitsim_available,
         "status": "not_gitsim",

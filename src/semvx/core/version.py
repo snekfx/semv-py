@@ -186,6 +186,8 @@ class SemanticVersion:
             return False
 
         # Both have pre-release, compare lexically
+        # mypy needs help understanding both are non-None at this point
+        assert self.prerelease is not None and other.prerelease is not None
         return self.prerelease < other.prerelease
 
 
