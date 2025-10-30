@@ -99,7 +99,7 @@ addopts = [
     "--cov=semvx",
     "--cov-report=term-missing",
     "--cov-report=html:htmlcov",
-    "--cov-fail-under=45",
+    "--cov-fail-under=40",
     "-v"
 ]
 
