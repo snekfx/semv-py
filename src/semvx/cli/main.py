@@ -506,12 +506,25 @@ def do_set_command():
             print(f"Version file not found: {version_file}", file=sys.stderr)
             sys.exit(1)
 
-        # Write the new version
-        writer = VersionFileWriter()
-        writer.update_version(version_file, new_version, proj_type)
+        # Parse version string to SemanticVersion object
+        try:
+            new_semver = SemanticVersion.parse(new_version)
+        except VersionParseError as e:
+            print(f"❌ Invalid version format: {new_version}")
+            print(f"   Error: {e}")
+            sys.exit(1)
 
-        print(f"✅ Updated {proj_type} version to {new_version}")
-        print(f"   File: {version_file}")
+        # Write the new version using correct API
+        success, message = VersionFileWriter.update_version_in_file(
+            version_file, new_semver, backup=True
+        )
+
+        if success:
+            print(f"✅ Updated {proj_type} version to {new_version}")
+            print(f"   File: {version_file}")
+        else:
+            print(f"❌ Failed to update {proj_type}: {message}", file=sys.stderr)
+            sys.exit(1)
 
     except FileWriteError as e:
         print(f"Error writing version: {e}", file=sys.stderr)
@@ -571,8 +584,15 @@ def do_sync_command():
         print(f"🔄 Synchronizing to version: {target_version}")
         print("=" * 60)
 
+        # Parse target version
+        try:
+            target_semver = SemanticVersion.parse(target_version)
+        except VersionParseError as e:
+            print(f"❌ Invalid version format: {target_version}")
+            print(f"   Error: {e}")
+            sys.exit(1)
+
         # Update all projects
-        writer = VersionFileWriter()
         updated_count = 0
 
         for project in context["projects"]:
@@ -589,9 +609,14 @@ def do_sync_command():
                 continue
 
             try:
-                writer.update_version(version_file, target_version, proj_type)
-                print(f"✅ {proj_type.ljust(10)} {current_version} → {target_version}")
-                updated_count += 1
+                success, message = VersionFileWriter.update_version_in_file(
+                    version_file, target_semver, backup=True
+                )
+                if success:
+                    print(f"✅ {proj_type.ljust(10)} {current_version} → {target_version}")
+                    updated_count += 1
+                else:
+                    print(f"❌ {proj_type.ljust(10)} failed: {message}")
             except FileWriteError as e:
                 print(f"❌ {proj_type.ljust(10)} failed: {e}")
 

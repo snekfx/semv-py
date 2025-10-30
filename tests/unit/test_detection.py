@@ -9,10 +9,12 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
 from semvx.detection.detector import (
-    compare_semver,
     detect_projects,
-    get_highest_version,
     get_repository_context,
+)
+from semvx.detection.foundations import (
+    compare_semver,
+    get_highest_version,
     normalize_semver,
 )
 
