@@ -415,7 +415,7 @@ def do_status():
         elif should_use_boxy():
             # Use boxy for enhanced visual output
             content = format_status_for_boxy(status_data)
-            boxed = render_with_boxy(content, theme="info")
+            boxed = render_with_boxy(content, theme="info", title="Repository Status")
             print(boxed)
         else:
             # Fallback to plain text (for compatibility)

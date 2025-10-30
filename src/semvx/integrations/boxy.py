@@ -95,9 +95,7 @@ def format_status_for_boxy(status_data: dict) -> str:
     """
     lines = []
 
-    # Header
-    lines.append("ℹ️  📊 Repository Status")
-    lines.append("")
+    # No header needed - will be provided via boxy title parameter
 
     # User and repo info
     if "user" in status_data:
