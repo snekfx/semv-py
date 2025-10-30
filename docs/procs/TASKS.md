@@ -323,10 +323,12 @@
   - ✅ NDSR-compliant with 2s timeouts per operation
   - ✅ Graceful fallbacks on git operation failures
   - ✅ Live timestamps with timezone-aware datetime
-- [ ] **TEST-DET-01**: Improve detection test coverage (3 SP)
-  - Add coverage for edge cases
-  - Lock regression fixes with tests
-  - Target 80% overall coverage
+- [x] **TEST-DET-01**: Improve detection test coverage (3 SP) - DONE ✅
+  - ✅ Added 36 new tests (4x increase: 12→48 tests)
+  - ✅ test_manifests.py: 21 tests for language detection/extraction
+  - ✅ test_reporting.py: 15 tests for tooling/metadata detection
+  - ✅ Edge cases covered (missing files, invalid data)
+  - ✅ Locks in ARCH-DET-01 refactoring, prevents regressions
 
 ### ✅ VERIFICATION COMPLETE
 **P1 Regression Fixes (REG-DET-01 & REG-DET-02):**
