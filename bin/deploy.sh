@@ -1,74 +1,217 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+#
+# SEMVX Deployment Script
+# Deploys semvx Python package using pip
+#
 
-# Configuration
-SNAKE_BIN_DIR="$HOME/.local/bin/snek"
+set -e  # Exit on error
 
-# Resolve repository root from bin/
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-# Extract version from Cargo.toml at repo root for display
-VERSION=$(grep '^version' "$ROOT_DIR/Cargo.toml" | head -1 | cut -d'"' -f2 2>/dev/null || echo "unknown")
+# Script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# Display deployment ceremony
-echo "╔════════════════════════════════════════════════╗"
-echo "║              BLADE DEPLOYMENT                  ║"
-echo "╠════════════════════════════════════════════════╣"
-echo "║ Package: Blade Dependency Management Tool      ║"
-echo "║ Version: v$VERSION                             ║"
-echo "║ Target:  $SNAKE_BIN_DIR/                       ║"
-echo "╚════════════════════════════════════════════════╝"
-echo ""
+# Functions
+print_header() {
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BLUE}   SEMVX DEPLOYMENT${NC}"
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+}
 
-# Deploy Blade tool
-echo "⚔️  Deploying Blade tool..."
-mkdir -p "$SNAKE_BIN_DIR"
+print_success() {
+    echo -e "${GREEN}✓${NC} $1"
+}
 
-REPOS_SOURCE="$ROOT_DIR/blade.py"
-BLADE_TARGET="$SNAKE_BIN_DIR/blade"
+print_error() {
+    echo -e "${RED}✗${NC} $1"
+}
 
-if [ -f "$REPOS_SOURCE" ]; then
-    # Deploy as blade
-    if ! cp "$REPOS_SOURCE" "$BLADE_TARGET"; then
-        echo "❌ Failed to copy blade to $BLADE_TARGET"
+print_info() {
+    echo -e "${YELLOW}ℹ${NC} $1"
+}
+
+check_python() {
+    if ! command -v python3 &> /dev/null; then
+        print_error "python3 not found in PATH"
         exit 1
     fi
 
-    if ! chmod +x "$BLADE_TARGET"; then
-        echo "❌ Failed to make blade executable"
+    python_version=$(python3 --version | awk '{print $2}')
+    print_success "Python $python_version detected"
+}
+
+check_pip() {
+    if ! command -v pip3 &> /dev/null; then
+        print_error "pip3 not found in PATH"
         exit 1
     fi
 
-    echo "✅ Blade tool deployed to $BLADE_TARGET"
+    print_success "pip3 available"
+}
 
-    # Test the deployment
-    echo "🧪 Testing blade deployment..."
-    if command -v blade >/dev/null 2>&1; then
-        echo "✅ blade is available in PATH"
+install_editable() {
+    print_info "Installing semvx in editable mode (development)"
+
+    cd "$ROOT_DIR"
+
+    # Install in editable mode with dev dependencies
+    if pip3 install -e ".[dev]" --user; then
+        print_success "Installed semvx in editable mode"
+        return 0
     else
-        echo "⚠️  Warning: blade not found in PATH (may need to restart shell)"
+        print_error "Failed to install in editable mode"
+        return 1
     fi
-else
-    echo "❌ Error: repos.py not found at $REPOS_SOURCE"
-    exit 1
-fi
+}
 
-echo ""
-echo "╔════════════════════════════════════════════════╗"
-echo "║          DEPLOYMENT SUCCESSFUL!                ║"
-echo "╚════════════════════════════════════════════════╝"
-echo "  Deployed: Blade v$VERSION                      "
-echo "  Location: $BLADE_TARGET                        "
-echo ""
-echo "⚔️  Blade dependency management commands:"
-echo "   blade hub                   # Hub package status with safety analysis"
-echo "   blade conflicts             # Version conflicts across ecosystem"
-echo "   blade review                # Comprehensive dependency review"
-echo "   blade usage                 # Usage analysis by priority"
-echo "   blade outdated              # Find outdated packages"
-echo "   blade update <repo>         # Update specific repository dependencies"
-echo "   blade eco                   # Update entire ecosystem"
-echo "   blade search <package>      # Search for package information"
-echo "   blade --help                # Full command reference"
-echo ""
-echo "🚀 Ready to slice through your dependency management!"
+install_regular() {
+    print_info "Installing semvx (regular mode)"
+
+    cd "$ROOT_DIR"
+
+    # Regular install
+    if pip3 install . --user; then
+        print_success "Installed semvx"
+        return 0
+    else
+        print_error "Failed to install semvx"
+        return 1
+    fi
+}
+
+install_pipx() {
+    print_info "Installing semvx with pipx (isolated environment)"
+
+    if ! command -v pipx &> /dev/null; then
+        print_error "pipx not found. Install with: python3 -m pip install --user pipx"
+        return 1
+    fi
+
+    cd "$ROOT_DIR"
+
+    # Install with pipx
+    if pipx install .; then
+        print_success "Installed semvx with pipx"
+        return 0
+    else
+        print_error "Failed to install with pipx"
+        return 1
+    fi
+}
+
+uninstall() {
+    print_info "Uninstalling semvx"
+
+    if pip3 uninstall -y semvx 2>/dev/null; then
+        print_success "Uninstalled semvx"
+    else
+        print_info "semvx was not installed"
+    fi
+}
+
+show_status() {
+    echo ""
+    print_info "Checking installation status..."
+
+    if command -v semvx &> /dev/null; then
+        semvx_path=$(which semvx)
+        semvx_version=$(semvx --version 2>&1 || echo "unknown")
+
+        print_success "semvx is installed"
+        echo "  Location: $semvx_path"
+        echo "  Version:  $semvx_version"
+
+        # Test basic functionality
+        if semvx status &> /dev/null; then
+            print_success "semvx status command works"
+        else
+            print_error "semvx status command failed"
+        fi
+    else
+        print_error "semvx not found in PATH"
+        echo "  Try adding ~/.local/bin to your PATH:"
+        echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
+    fi
+}
+
+print_usage() {
+    cat << EOF
+Usage: $0 [COMMAND]
+
+Commands:
+    install         Install semvx (regular mode)
+    dev             Install semvx in editable mode (for development)
+    pipx            Install semvx with pipx (isolated environment)
+    uninstall       Uninstall semvx
+    status          Show installation status
+    help            Show this help message
+
+Examples:
+    $0 dev          # Install in development mode
+    $0 install      # Install for regular use
+    $0 pipx         # Install with pipx
+    $0 status       # Check if semvx is installed
+
+EOF
+}
+
+# Main script
+main() {
+    print_header
+    echo ""
+
+    # Parse command
+    COMMAND="${1:-install}"
+
+    case "$COMMAND" in
+        install)
+            check_python
+            check_pip
+            install_regular
+            show_status
+            ;;
+
+        dev|editable)
+            check_python
+            check_pip
+            install_editable
+            show_status
+            ;;
+
+        pipx)
+            check_python
+            install_pipx
+            show_status
+            ;;
+
+        uninstall|remove)
+            uninstall
+            ;;
+
+        status)
+            check_python
+            check_pip
+            show_status
+            ;;
+
+        help|--help|-h)
+            print_usage
+            ;;
+
+        *)
+            print_error "Unknown command: $COMMAND"
+            echo ""
+            print_usage
+            exit 1
+            ;;
+    esac
+}
+
+# Run main function
+main "$@"
