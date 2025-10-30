@@ -180,6 +180,10 @@ def main():
         do_since_command()
         return
 
+    if len(sys.argv) > 1 and sys.argv[1] == "rbc":
+        do_rbc_command()
+        return
+
     # Default: show help
     print_help()
 
@@ -218,6 +222,7 @@ COMMANDS:
     gs                  Show count of changed files in working tree
     pend [LABEL]        Show pending commits since last tag (optional: feat, fix, etc.)
     since               Show time since last commit
+    rbc                 Compare local vs remote build count
     bc                  Show current build count (total commits)
     build [FILE]        Generate build info file (default: .build_info)
     fetch               Fetch remote tags
@@ -1898,6 +1903,75 @@ def do_since_command():
         else:
             print(f"✗ Last commit was {time_ago}", file=sys.stderr)
 
+        sys.exit(0)
+
+    except Exception as e:
+        print(f"❌ Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def do_rbc_command():
+    """Compare local vs remote build count."""
+    try:
+        repo_path = Path.cwd()
+
+        # Get local build count
+        result_local = subprocess.run(
+            ["git", "rev-list", "HEAD", "--count"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        if result_local.returncode != 0:
+            print("❌ Not a git repository", file=sys.stderr)
+            sys.exit(1)
+
+        local_count = int(result_local.stdout.strip())
+
+        # Determine remote default branch
+        result_branch = subprocess.run(
+            ["git", "remote", "show", "origin"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        remote_branch = "main"  # default
+        if result_branch.returncode == 0:
+            for line in result_branch.stdout.split("\n"):
+                if "HEAD branch:" in line:
+                    remote_branch = line.split(":")[-1].strip()
+                    break
+
+        # Get remote build count
+        result_remote = subprocess.run(
+            ["git", "rev-list", f"origin/{remote_branch}", "--count"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        if result_remote.returncode != 0:
+            # Try fallback to refs/remotes/origin/main
+            result_remote = subprocess.run(
+                ["git", "rev-list", "refs/remotes/origin/main", "--count"],
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+        if result_remote.returncode == 0:
+            remote_count = int(result_remote.stdout.strip())
+        else:
+            remote_count = 0
+
+        # Display comparison (matches bash semv format)
+        print(f"Build(local:remote) {local_count}:{remote_count}", file=sys.stderr)
         sys.exit(0)
 
     except Exception as e:
