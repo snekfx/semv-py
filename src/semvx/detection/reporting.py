@@ -18,7 +18,6 @@ from typing import Dict, List, Union
 from .foundations import validate_semver_format
 from .manifests import is_generated_file
 
-
 # ============================================================================
 # Project Validation
 # ============================================================================

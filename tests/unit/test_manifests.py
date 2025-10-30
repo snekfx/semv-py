@@ -2,10 +2,7 @@
 Tests for the manifests detection module.
 """
 
-import tempfile
-from pathlib import Path
 
-import pytest
 
 from semvx.detection.manifests import (
     detect_bash_patterns,
@@ -13,7 +10,6 @@ from semvx.detection.manifests import (
     extract_javascript_version,
     extract_python_version,
     extract_rust_version,
-    get_bash_project_file,
     has_javascript_manifest,
     has_python_manifest,
     has_rust_manifest,

@@ -44,7 +44,6 @@ from .reporting import (
     validate_project_structure,
 )
 
-
 # ============================================================================
 # Project Detection with Fallback Hierarchy
 # ============================================================================

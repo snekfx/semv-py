@@ -444,7 +444,7 @@ def do_get_command():
                 git_repo = GitRepository(repo_path)
                 latest_tag = git_repo.get_latest_tag()
                 if latest_tag:
-                    print(f"\nGIT:")
+                    print("\nGIT:")
                     print(f"  Latest tag: {latest_tag}")
                     found_any = True
 
@@ -698,7 +698,7 @@ def do_auto_command():
             bump_name = "patch"
 
         # Display analysis
-        print(f"🤖 AUTO: Analyzing commits and applying version bump")
+        print("🤖 AUTO: Analyzing commits and applying version bump")
         print("=" * 60)
         print(f"Current version:  v{current_version}")
         print(f"Calculated bump:  {bump_name}")
@@ -788,10 +788,10 @@ def do_auto_command():
         if dry_run:
             print(f"✅ Dry run complete - would update {updated_count} file(s)")
         else:
-            print(f"✅ Auto workflow complete!")
+            print("✅ Auto workflow complete!")
             print(f"   Updated {updated_count} file(s) to v{next_version}")
             print(f"   Tagged as v{next_version}")
-            print(f"\n💡 Next: Commit your changes and push")
+            print("\n💡 Next: Commit your changes and push")
 
     except GitError as e:
         print(f"Git error: {e}", file=sys.stderr)

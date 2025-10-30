@@ -2,9 +2,7 @@
 Tests for the reporting module.
 """
 
-from pathlib import Path
 
-import pytest
 
 from semvx.detection.reporting import (
     detect_dirty_directories,
