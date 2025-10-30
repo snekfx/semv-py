@@ -7,6 +7,7 @@ Main entry point for the semvx command.
 import os
 import subprocess
 import sys
+from importlib.metadata import version
 from pathlib import Path
 
 from semvx.core.build_info import BuildInfo
@@ -42,7 +43,11 @@ def main():
     sys.argv = [sys.argv[0]] + args
 
     if len(sys.argv) > 1 and sys.argv[1] in ["--version", "-v"]:
-        print("semvx 3.0.0-dev (Python rewrite)")
+        try:
+            semvx_version = version("semvx")
+        except Exception:
+            semvx_version = "unknown"
+        print(f"semvx {semvx_version}")
         return
 
     if len(sys.argv) > 1 and sys.argv[1] in ["--help", "-h"]:
@@ -124,15 +129,24 @@ def main():
         return
 
     # Default help message
-    print("semvx 3.0.0-dev - Semantic Version Manager (Python Edition)")
+    try:
+        semvx_version = version("semvx")
+    except Exception:
+        semvx_version = "unknown"
+    print(f"semvx {semvx_version} - Semantic Version Manager (Python Edition)")
     print("Use 'semvx --help' for usage information.")
 
 
 def print_help():
     """Print help message."""
+    try:
+        semvx_version = version("semvx")
+    except Exception:
+        semvx_version = "unknown"
+
     print(
-        """
-semvx 3.0.0-dev - Semantic Version Manager (Python Edition)
+        f"""
+semvx {semvx_version} - Semantic Version Manager (Python Edition)
 
 USAGE:
     semvx [COMMAND] [OPTIONS]
