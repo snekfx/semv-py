@@ -298,11 +298,12 @@
   - ✅ Dry-run mode implemented with --dry-run flag
   - ✅ Version display commands working: `semvx get`, `semvx version`
   - ✅ Full semantic version parsing and increment logic
-- [ ] **ARCH-DET-01**: Split detection module into focused submodules (5 SP)
-  - Split detection module into foundations, manifests, reporting
-  - Reduce size and enable targeted imports
-  - Maintains shared module agreement
-  - Improves maintainability
+- [x] **ARCH-DET-01**: Split detection module into focused submodules (5 SP) - DONE ✅
+  - ✅ Split detector.py (848 → 272 lines, 68% reduction)
+  - ✅ Created manifests.py (388 lines) for language-specific detection
+  - ✅ Created reporting.py (245 lines) for repository metadata
+  - ✅ Maintains shared module agreement
+  - ✅ All tests passing (12/12), CLI working
 
 ### P4 - LOWER PRIORITY
 - [ ] **ARCH-CORE-02**: Introduce VersionManager service (5 SP)
