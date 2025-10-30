@@ -758,9 +758,7 @@ def do_auto_command():
         if tag_only:
             # Just create the tag, don't update files
             if not dry_run:
-                success, message = GitVersionTagger.create_version_tag(
-                    git_repo, next_version
-                )
+                success, message = GitVersionTagger.create_version_tag(git_repo, next_version)
                 if success:
                     print(f"✅ Created tag: v{next_version}")
                 else:
