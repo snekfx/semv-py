@@ -172,6 +172,10 @@ def main():
         do_pend_command()
         return
 
+    if len(sys.argv) > 1 and sys.argv[1] == "can":
+        do_can_command()
+        return
+
     # Default: show help
     print_help()
 
@@ -206,6 +210,7 @@ COMMANDS:
     set TYPE VER [FILE] Set version in project files
     sync [FILE]         Synchronize versions across all project files
     new                 Initialize repository with v0.0.1 tag
+    can                 Check if repository can use semantic versioning
     gs                  Show count of changed files in working tree
     pend [LABEL]        Show pending commits since last tag (optional: feat, fix, etc.)
     bc                  Show current build count (total commits)
@@ -1769,6 +1774,72 @@ def do_pend_command():
     except GitError as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         sys.exit(1)
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def do_can_command():
+    """Check if repository can use semantic versioning."""
+    try:
+        repo_path = Path.cwd()
+        issues = 0
+
+        print("Checking semver readiness...", file=sys.stderr)
+
+        # Check 1: Is this a git repository?
+        try:
+            repo = GitRepository(repo_path)
+            print("✓ Git repository detected", file=sys.stderr)
+        except GitError:
+            print("✗ Not in a git repository", file=sys.stderr)
+            issues += 1
+            repo = None
+
+        # Check 2: Does it have any commits?
+        if repo:
+            commit_hash = repo.get_commit_hash()
+            if commit_hash:
+                print("✓ Repository has commits", file=sys.stderr)
+            else:
+                print("✗ No commits found", file=sys.stderr)
+                issues += 1
+
+        # Check 3: Does it have semver tags?
+        if repo:
+            latest_tag = repo.get_latest_tag()
+            if latest_tag:
+                print("✓ Semver tags found", file=sys.stderr)
+            else:
+                print("⚠ No semver tags found (use 'semvx new' to initialize)", file=sys.stderr)
+
+        # Check 4: Are there uncommitted changes?
+        if repo:
+            has_changes = repo.has_uncommitted_changes()
+            if not has_changes:
+                print("✓ Working tree is clean", file=sys.stderr)
+            else:
+                print("⚠ Uncommitted changes detected", file=sys.stderr)
+                print("  Consider committing before version operations", file=sys.stderr)
+
+        # Check 5: Can we detect project type?
+        if repo:
+            context = get_repository_context(repo_path)
+            if context.get("projects"):
+                print("✓ Project type detected", file=sys.stderr)
+            else:
+                print("⚠ No supported package files found", file=sys.stderr)
+                print("  Semvx will use git tags as authority", file=sys.stderr)
+
+        # Report results
+        if issues == 0:
+            print("\n✓ Repository is ready for semantic versioning", file=sys.stderr)
+            sys.exit(0)
+        else:
+            print(f"\n✗ Repository is not ready for semantic versioning ({issues} issues)", file=sys.stderr)
+            print("  Fix the issues above and try again", file=sys.stderr)
+            sys.exit(1)
+
     except Exception as e:
         print(f"❌ Unexpected error: {e}", file=sys.stderr)
         sys.exit(1)
