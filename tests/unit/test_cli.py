@@ -217,6 +217,12 @@ class TestHelp:
         print_help()
         captured = capsys.readouterr()
 
+        # Check for branding signature
+        assert "Version:" in captured.out
+        assert "AGPL-3.0" in captured.out
+        assert "Copyright" in captured.out
+        assert "📊 Semantic Version Manager for Modern Development" in captured.out
+
         # Check for main sections
         assert "USAGE:" in captured.out
         assert "COMMANDS:" in captured.out

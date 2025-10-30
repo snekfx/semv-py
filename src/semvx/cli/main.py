@@ -175,12 +175,15 @@ def print_help():
     logo = load_logo()
     if logo:
         print(logo.rstrip())
-        print()
+
+    print(f"Version: {semvx_version} | License: AGPL-3.0")
+    print("Copyright © 2025 Qodeninja/SnekFX")
+    print()
+    print("📊 Semantic Version Manager for Modern Development")
+    print()
 
     print(
-        f"""semvx {semvx_version} - Semantic Version Manager (Python Edition)
-
-USAGE:
+        """USAGE:
     semvx [COMMAND] [OPTIONS]
 
 COMMANDS:
