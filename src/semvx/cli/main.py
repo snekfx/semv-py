@@ -730,11 +730,13 @@ def do_auto_command():
         if tag_only:
             # Just create the tag, don't update files
             if not dry_run:
-                tagger = GitVersionTagger(repo_path)
-                if tagger.create_version_tag(next_version):
+                success, message = GitVersionTagger.create_version_tag(
+                    git_repo, next_version
+                )
+                if success:
                     print(f"✅ Created tag: v{next_version}")
                 else:
-                    print("❌ Failed to create tag", file=sys.stderr)
+                    print(f"❌ {message}", file=sys.stderr)
                     sys.exit(1)
             else:
                 print(f"✅ Would create tag: v{next_version}")
@@ -782,11 +784,11 @@ def do_auto_command():
         # Create git tag
         if not dry_run:
             print("\n🏷️  Creating git tag...")
-            tagger = GitVersionTagger(repo_path)
-            if tagger.create_version_tag(next_version):
+            success, message = GitVersionTagger.create_version_tag(git_repo, next_version)
+            if success:
                 print(f"✅ Tagged as: v{next_version}")
             else:
-                print("⚠️  Warning: Failed to create git tag")
+                print(f"⚠️  Warning: {message}")
 
         print("=" * 60)
         if dry_run:
