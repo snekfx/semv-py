@@ -161,7 +161,7 @@ class TestStatusCommand:
         # Clean up
         os.environ.pop("SEMVX_USE_BOXY", None)
 
-        assert "Repository Status" in captured.out
+        # Check for content (not header which is now passed to boxy as title)
         assert "testuser" in captured.out
         assert "test-repo" in captured.out
         assert "5 changes pending commit" in captured.out
