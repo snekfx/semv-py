@@ -59,11 +59,15 @@ def main():
         do_detection()
         return
 
-    if len(sys.argv) > 1 and sys.argv[1] == "status":
+    if len(sys.argv) > 1 and sys.argv[1] in ["status", "st", "stat"]:
         do_status()
         return
 
     # Version management commands
+    if len(sys.argv) > 1 and sys.argv[1] == "auto":
+        do_auto_command()
+        return
+
     if len(sys.argv) > 1 and sys.argv[1] == "bump":
         do_bump_command()
         return
@@ -629,6 +633,212 @@ def do_sync_command():
 
         traceback.print_exc()
         sys.exit(1)
+
+
+def do_auto_command():
+    """
+    Automatic version workflow: analyze commits, calculate bump, update all files, and tag.
+    This is the full workflow - what bash semv's 'sync' used to do.
+    """
+    # Parse arguments
+    dry_run = False
+    verbose = False
+    tag_only = False
+
+    for arg in sys.argv[2:]:
+        if arg in ["--dry-run", "-n"]:
+            dry_run = True
+        elif arg in ["--verbose", "-v"]:
+            verbose = True
+        elif arg == "--tag":
+            tag_only = True
+        elif arg in ["--help", "-h"]:
+            print_auto_help()
+            return
+
+    try:
+        repo_path = Path.cwd()
+
+        # Get git repository
+        git_repo = GitRepository(repo_path)
+
+        # Get latest tag
+        latest_tag = git_repo.get_latest_tag()
+
+        if not latest_tag:
+            print("⚠️  No git tags found. Recommending initial version v0.1.0")
+            print("💡 Tip: Run 'semvx set rust 0.1.0' (or your project type) first")
+            print("   Then run 'semvx tag' to create the initial tag")
+            sys.exit(1)
+
+        # Parse current version
+        try:
+            current_version = SemanticVersion.parse(latest_tag)
+        except VersionParseError:
+            print(f"❌ Could not parse tag '{latest_tag}' as semantic version", file=sys.stderr)
+            sys.exit(1)
+
+        # Analyze commits since last tag
+        analyzer = CommitAnalyzer(repo_path)
+        analysis = analyzer.analyze_commits_since_tag(latest_tag)
+
+        # Calculate next version based on commit analysis
+        if analysis.bump_type == BumpType.MAJOR:
+            next_version = current_version.bump_major()
+            bump_name = "major"
+        elif analysis.bump_type == BumpType.MINOR:
+            next_version = current_version.bump_minor()
+            bump_name = "minor"
+        elif analysis.bump_type == BumpType.PATCH:
+            next_version = current_version.bump_patch()
+            bump_name = "patch"
+        else:
+            # No significant commits - still bump patch
+            next_version = current_version.bump_patch()
+            bump_name = "patch"
+
+        # Display analysis
+        print(f"🤖 AUTO: Analyzing commits and applying version bump")
+        print("=" * 60)
+        print(f"Current version:  v{current_version}")
+        print(f"Calculated bump:  {bump_name}")
+        print(f"Next version:     v{next_version}")
+        print(f"Commits analyzed: {analysis.commit_count}")
+
+        if dry_run:
+            print("\n[DRY RUN MODE - No changes will be made]")
+
+        # Show commit breakdown if verbose
+        if verbose:
+            if analysis.major_commits:
+                print(f"\n🔴 Major changes ({len(analysis.major_commits)}):")
+                for commit in analysis.major_commits[:5]:
+                    print(f"  - {commit}")
+            if analysis.minor_commits:
+                print(f"\n🟡 Minor changes ({len(analysis.minor_commits)}):")
+                for commit in analysis.minor_commits[:5]:
+                    print(f"  - {commit}")
+            if analysis.patch_commits:
+                print(f"\n🟢 Patch changes ({len(analysis.patch_commits)}):")
+                for commit in analysis.patch_commits[:5]:
+                    print(f"  - {commit}")
+
+        print("\n" + "=" * 60)
+
+        if tag_only:
+            # Just create the tag, don't update files
+            if not dry_run:
+                tagger = GitVersionTagger(repo_path)
+                if tagger.create_version_tag(next_version):
+                    print(f"✅ Created tag: v{next_version}")
+                else:
+                    print("❌ Failed to create tag", file=sys.stderr)
+                    sys.exit(1)
+            else:
+                print(f"✅ Would create tag: v{next_version}")
+            return
+
+        # Get all detected projects
+        context = get_repository_context(repo_path)
+
+        if not context["projects"]:
+            print("⚠️  No projects detected. Cannot update version files.")
+            print("💡 Tip: Run 'semvx detect' to see what can be detected.")
+            sys.exit(1)
+
+        # Update all project files
+        updated_count = 0
+        print("📝 Updating project files...")
+
+        for project in context["projects"]:
+            proj_type = project["type"]
+            current_proj_version = project.get("version", "N/A")
+            version_file = repo_path / project.get("version_file", "")
+
+            if not version_file.exists():
+                print(f"⚠️  Skipping {proj_type}: file not found")
+                continue
+
+            if not dry_run:
+                try:
+                    success, message = VersionFileWriter.update_version_in_file(
+                        version_file, next_version, backup=True
+                    )
+                    if success:
+                        print(f"✅ {proj_type.ljust(10)} {current_proj_version} → v{next_version}")
+                        updated_count += 1
+                    else:
+                        print(f"❌ {proj_type.ljust(10)} failed: {message}")
+                except FileWriteError as e:
+                    print(f"❌ {proj_type.ljust(10)} failed: {e}")
+            else:
+                print(f"✅ {proj_type.ljust(10)} {current_proj_version} → v{next_version} (dry-run)")
+                updated_count += 1
+
+        # Create git tag
+        if not dry_run:
+            print("\n🏷️  Creating git tag...")
+            tagger = GitVersionTagger(repo_path)
+            if tagger.create_version_tag(next_version):
+                print(f"✅ Tagged as: v{next_version}")
+            else:
+                print("⚠️  Warning: Failed to create git tag")
+
+        print("=" * 60)
+        if dry_run:
+            print(f"✅ Dry run complete - would update {updated_count} file(s)")
+        else:
+            print(f"✅ Auto workflow complete!")
+            print(f"   Updated {updated_count} file(s) to v{next_version}")
+            print(f"   Tagged as v{next_version}")
+            print(f"\n💡 Next: Commit your changes and push")
+
+    except GitError as e:
+        print(f"Git error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Error during auto workflow: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+
+def print_auto_help():
+    """Print help for auto command."""
+    print(
+        """
+semvx auto - Automatic version workflow
+
+USAGE:
+    semvx auto [OPTIONS]
+
+DESCRIPTION:
+    Analyzes git commits since the last tag, calculates the appropriate
+    version bump (major/minor/patch), updates all project files, and
+    creates a git tag. This is the full automated workflow.
+
+OPTIONS:
+    --dry-run, -n     Preview changes without modifying files or tags
+    --verbose, -v     Show detailed commit analysis
+    --tag             Only create the tag, don't update files
+    --help, -h        Show this help message
+
+WORKFLOW:
+    1. Get latest git tag (e.g., v0.14.0)
+    2. Analyze commits since tag using conventional commits
+    3. Calculate version bump (major/minor/patch)
+    4. Update all detected project files with new version
+    5. Create git tag for new version
+
+EXAMPLES:
+    semvx auto                  # Full auto workflow
+    semvx auto --dry-run        # Preview what would happen
+    semvx auto --verbose        # Show detailed commit analysis
+    semvx auto --tag            # Just create tag, don't update files
+
+NOTE: Requires at least one existing git tag. Use 'semvx tag' to create initial tag.
+"""
+    )
 
 
 def do_bump_command():
