@@ -242,22 +242,87 @@
 
   **Priority:** LOW - Doesn't break functionality
 
+- [ ] **BUGS-07** (LOW - 1 SP) - Type Checking Errors in version.py
+  **Problem:** mypy type checking fails on Optional comparison
+  - `src/semvx/core/version.py:189` - Unsupported operand types for < ("str" and "None")
+  - `src/semvx/core/version.py:189` - Unsupported operand types for > ("str" and "None")
+  - `src/semvx/core/version.py:189` - Unsupported left operand type for < ("None")
+  - Note: Both left and right operands are unions
+
+  **Impact:**
+  - ⚠️ CI/CD mypy checks fail
+  - ⚠️ Type safety not enforced
+  - ✅ Runtime functionality works (tests pass)
+
+  **Fix Required:**
+  - Add proper None checks before comparison operations
+  - Or use assert to narrow types for mypy
+  - Ensure Optional types are handled correctly
+
+  **Files:** `src/semvx/core/version.py:189`
+
+  **Priority:** LOW - CI/CD fails but runtime works
+
+- [ ] **BUGS-08** (LOW - 1 SP) - Type Checking Errors in foundations.py
+  **Problem:** mypy complains about dict return type mismatches
+  - `src/semvx/detection/foundations.py:190` - got "dict[str, object]", expected "dict[str, Union[bool, str, None]]"
+  - `src/semvx/detection/foundations.py:194` - got "dict[str, object]", expected "dict[str, Union[bool, str, None]]"
+  - `src/semvx/detection/foundations.py:207` - got "dict[str, object]", expected "dict[str, Union[bool, str, None]]"
+
+  **Impact:**
+  - ⚠️ CI/CD mypy checks fail
+  - ⚠️ Type safety not enforced
+  - ✅ Runtime functionality works (tests pass)
+
+  **Fix Required:**
+  - Update return type annotations to match actual dict structure
+  - Or cast dict values to proper union types
+
+  **Files:** `src/semvx/detection/foundations.py:190,194,207`
+
+  **Priority:** LOW - CI/CD fails but runtime works
+
+- [ ] **BUGS-09** (LOW - 1 SP) - Type Checking Errors in reporting.py
+  **Problem:** mypy complains about dict return type and assignment mismatches
+  - `src/semvx/detection/reporting.py:74` - got "dict[Any, dict[str, object]]", expected "dict[str, dict[str, Union[bool, str, None]]]"
+  - `src/semvx/detection/reporting.py:116` - got "dict[str, dict[str, object]]", expected "dict[str, dict[str, Union[bool, str]]]"
+  - `src/semvx/detection/reporting.py:151` - expression has type "list[str]", target has type "dict[str, object]"
+  - `src/semvx/detection/reporting.py:153` - got "dict[str, dict[str, object]]", expected "dict[str, Union[bool, list[str]]]"
+
+  **Impact:**
+  - ⚠️ CI/CD mypy checks fail
+  - ⚠️ Type safety not enforced
+  - ✅ Runtime functionality works (tests pass)
+
+  **Fix Required:**
+  - Update return type annotations to match actual dict structure
+  - Fix line 151 assignment type mismatch (list vs dict)
+  - Or cast dict values to proper union types
+
+  **Files:** `src/semvx/detection/reporting.py:74,116,151,153`
+
+  **Priority:** LOW - CI/CD fails but runtime works
+
 ### Bug Summary
 
 | Bug | Priority | SP | Impact | Status |
 |-----|----------|-----|--------|--------|
-| BUGS-01 | BLOCKER | 0.5 | Tool won't start | [ ] |
-| BUGS-02 | BLOCKER | 1.5 | Can't deploy | [ ] |
-| BUGS-03 | HIGH | 2-4 | Missing get/set/sync | [ ] |
-| BUGS-04 | HIGH | 2-3 | Missing next | [ ] |
-| BUGS-05 | MEDIUM | 0.5 | Version mismatch | [ ] |
-| BUGS-06 | LOW | 0.5 | Duplicate code | [ ] |
+| BUGS-01 | BLOCKER | 0.5 | Tool won't start | [x] FIXED |
+| BUGS-02 | BLOCKER | 1.5 | Can't deploy | [x] FIXED |
+| BUGS-03 | HIGH | 2-4 | Missing get/set/sync | [x] FIXED |
+| BUGS-04 | HIGH | 2-3 | Missing next | [x] FIXED |
+| BUGS-05 | MEDIUM | 0.5 | Version mismatch | [x] FIXED |
+| BUGS-06 | LOW | 0.5 | Duplicate code | [x] FIXED |
+| BUGS-07 | LOW | 1 | mypy version.py | [ ] |
+| BUGS-08 | LOW | 1 | mypy foundations.py | [ ] |
+| BUGS-09 | LOW | 1 | mypy reporting.py | [ ] |
 
 **Total Bug Fix Effort:**
-- Minimum (remove routing): 3 SP (~3 hours)
-- Full (implement features): 9-11 SP (~11 hours)
+- ~~Minimum (remove routing): 3 SP (~3 hours)~~ ✅ ALL FIXED
+- ~~Full (implement features): 9-11 SP (~11 hours)~~ ✅ ALL FIXED
+- Remaining: 3 SP (~3 hours) - Type checking errors (LOW priority)
 
-**Recommended:** Fix BUGS-01 immediately (30 seconds), then implement BUGS-03/04 for feature parity
+**Status:** All critical/high/medium bugs fixed! Only LOW priority mypy type errors remain.
 
 ---
 
