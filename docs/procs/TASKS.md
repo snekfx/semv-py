@@ -82,6 +82,185 @@
 
 ---
 
+## 🐛 CRITICAL BUGS (2025-10-30)
+
+**Status:** 🔴 Tool is 100% NON-FUNCTIONAL due to BUGS-01
+
+### BLOCKER Priority (Must Fix First)
+
+- [x] **BUGS-01** (CRITICAL - 0.5 SP) - Import Error Prevents Tool Startup ✅ FIXED
+  **Problem:** Tool crashes on ANY command with ImportError
+  - `src/semvx/detection/__init__.py:13` imports from wrong module
+  - Tries: `from .detector import compare_semver, get_highest_version, normalize_semver`
+  - Reality: These functions exist in `foundations.py`, NOT `detector.py`
+
+  **Impact:**
+  - ❌ 100% non-functional - tool won't start
+  - ❌ All commands crash immediately
+  - ❌ No help text, no status, nothing works
+  - ❌ Blocks CI/CD (tests can't run)
+
+  **Fix Required:**
+  ```python
+  # Change line 13 to split imports:
+  from .detector import get_repository_context
+  from .foundations import compare_semver, get_highest_version, normalize_semver
+  ```
+
+  **Verification:** `PYTHONPATH=src python3 src/semvx/cli/main.py status`
+
+  **Files:** `src/semvx/detection/__init__.py:13`
+
+  **Priority:** BLOCKER - Must fix before ANY usage
+
+- [ ] **BUGS-02** (CRITICAL - 1.5 SP) - deploy.sh Deploys Wrong Tool (Blade)
+  **Problem:** Deployment script is for Blade tool, not semvx
+  - `bin/deploy.sh` contains old copy from Blade project
+  - Shows "BLADE DEPLOYMENT" branding
+  - Looks for `Cargo.toml` (Rust file, but this is Python!)
+  - Looks for `blade.py` (doesn't exist)
+  - Copies to `~/.local/bin/snek/blade` (wrong name)
+
+  **Impact:**
+  - ❌ Deployment always fails with: "Error: repos.py not found"
+  - ❌ Can't install semvx via deploy.sh
+  - ❌ Users get confused by Blade branding
+
+  **Fix Required:** Rewrite entire script for pip-based deployment
+  - Should support: `pip install -e .` (editable mode)
+  - Should support: `pipx install .` (isolated install)
+  - Should handle pyenv environments
+  - Update branding to SEMVX
+
+  **Files:** `bin/deploy.sh` (complete rewrite)
+
+  **Priority:** BLOCKER - Required for deployment
+
+### HIGH Priority (User-Facing Crashes)
+
+- [ ] **BUGS-03** (HIGH - 2-4 SP) - Missing get/set/sync Commands
+  **Problem:** Documentation claims commands exist but they're missing
+  - TASKS.md marks FEAT-GET-SET-01 and FEAT-SYNC-01 as ✅ DONE
+  - Claims: "Implemented version get/set operations"
+  - Reality: `do_get_command()`, `do_set_command()`, `do_sync_command()` DO NOT EXIST
+  - `main.py` routes these commands (lines 82-92) to non-existent functions
+
+  **Impact:**
+  - ⚠️ Tool crashes with NameError when calling: `semvx get`, `semvx set`, `semvx sync`
+  - ⚠️ Documentation misleads users
+  - ⚠️ Breaks feature parity with bash semv (critical pillar!)
+
+  **Fix Options:**
+  1. **Implement commands** (4-6 SP effort) - Recommended for feature parity
+  2. **Remove routing** and update docs to show TODO (0.5 SP)
+
+  **If Implementing:**
+  - `do_get_command()` - get all|rust|js|python|bash
+  - `do_set_command()` - set TYPE VER [FILE]
+  - `do_sync_command()` - sync [FILE] to highest version
+  - Use existing VersionFileWriter
+  - Use existing project detection
+
+  **Files:**
+  - `src/semvx/cli/main.py:82-92` - Remove routing or implement
+  - `docs/procs/TASKS.md` - Update completion status
+
+  **Priority:** HIGH - Blocks bash semv feature parity (primary pillar)
+
+- [ ] **BUGS-04** (HIGH - 2-3 SP) - Missing next Command
+  **Problem:** Similar to BUGS-03 but for next command
+  - TASKS.md marks FEAT-NEXT-01 as ✅ DONE
+  - Claims: "Implemented as part of commit analysis feature"
+  - Reality: `do_next_command()` DOES NOT EXIST
+  - `main.py` routes command (lines 78-80) to non-existent function
+  - **CommitAnalyzer exists but is unused!**
+
+  **Impact:**
+  - ⚠️ Tool crashes with NameError when calling: `semvx next`
+  - ⚠️ README.md advertises this as working feature
+  - ⚠️ Breaks feature parity with bash semv
+
+  **Fix Options:**
+  1. **Implement do_next_command()** (2-3 SP) - Recommended, CommitAnalyzer ready!
+  2. **Remove routing** and update docs (0.5 SP)
+
+  **If Implementing:**
+  - Wire `CommitAnalyzer` to `do_next_command()`
+  - Add `--verbose` flag for detailed analysis
+  - Show calculated next version from commit history
+  - Use bash semv commit conventions
+
+  **Files:**
+  - `src/semvx/cli/main.py:78-80` - Implement do_next_command()
+  - `src/semvx/core/commit_analyzer.py` - Already exists!
+
+  **Priority:** HIGH - Feature used frequently, CommitAnalyzer ready to wire
+
+### MEDIUM Priority (Cosmetic/Cleanup)
+
+- [ ] **BUGS-05** (MEDIUM - 0.5 SP) - Version Number Inconsistency
+  **Problem:** Hardcoded version doesn't match pyproject.toml
+  - `main.py:45` shows: "semvx 3.0.0-dev (Python rewrite)"
+  - `main.py:127` shows: "semvx 3.0.0-dev"
+  - `pyproject.toml:7` says: `version = "1.3.0"`
+
+  **Impact:**
+  - ⚠️ Users see wrong version number
+  - ⚠️ Inconsistent across outputs
+
+  **Fix Required:**
+  - Import version from package metadata
+  - Use `importlib.metadata.version("semvx")`
+  - Single source of truth in pyproject.toml
+
+  **Files:** `src/semvx/cli/main.py:45,127,135`
+
+  **Priority:** MEDIUM - Cosmetic but confusing
+
+### LOW Priority (Technical Debt)
+
+- [ ] **BUGS-06** (LOW - 0.5 SP) - Duplicate Version Utility Modules
+  **Problem:** Two files with same functions
+  - `src/semvx/detection/version.py` has: normalize_semver, compare_semver, get_highest_version
+  - `src/semvx/detection/foundations.py` ALSO has same functions
+  - Tests import from foundations.py
+  - `__init__.py` tries to import from detector.py (wrong!)
+
+  **Impact:**
+  - ⚠️ Code duplication and maintenance burden
+  - ⚠️ Risk of divergent implementations
+
+  **Fix Required:**
+  - Decide on single source (foundations.py)
+  - Remove duplicate from version.py
+  - Update all imports to be consistent
+
+  **Files:**
+  - `src/semvx/detection/version.py`
+  - `src/semvx/detection/foundations.py`
+  - `src/semvx/detection/__init__.py`
+
+  **Priority:** LOW - Doesn't break functionality
+
+### Bug Summary
+
+| Bug | Priority | SP | Impact | Status |
+|-----|----------|-----|--------|--------|
+| BUGS-01 | BLOCKER | 0.5 | Tool won't start | [ ] |
+| BUGS-02 | BLOCKER | 1.5 | Can't deploy | [ ] |
+| BUGS-03 | HIGH | 2-4 | Missing get/set/sync | [ ] |
+| BUGS-04 | HIGH | 2-3 | Missing next | [ ] |
+| BUGS-05 | MEDIUM | 0.5 | Version mismatch | [ ] |
+| BUGS-06 | LOW | 0.5 | Duplicate code | [ ] |
+
+**Total Bug Fix Effort:**
+- Minimum (remove routing): 3 SP (~3 hours)
+- Full (implement features): 9-11 SP (~11 hours)
+
+**Recommended:** Fix BUGS-01 immediately (30 seconds), then implement BUGS-03/04 for feature parity
+
+---
+
 ## 🚨 PRIORITY FIXES (From Codex Review)
 
 ### P1 - CRITICAL (Must fix before proceeding)

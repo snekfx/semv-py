@@ -9,7 +9,8 @@ Distribution Model: Source code copying (not package dependency)
 Compatible with: SEMV v3.0+, Blade Next v1.0+
 """
 
-# Import what actually exists in the detector module
-from .detector import compare_semver, get_highest_version, get_repository_context, normalize_semver
+# Import what actually exists in the detector and foundations modules
+from .detector import get_repository_context
+from .foundations import compare_semver, get_highest_version, normalize_semver
 
 __all__ = ["get_repository_context", "normalize_semver", "compare_semver", "get_highest_version"]
