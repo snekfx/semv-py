@@ -2,8 +2,6 @@
 Tests for the manifests detection module.
 """
 
-
-
 from semvx.detection.manifests import (
     detect_bash_patterns,
     extract_bash_version,

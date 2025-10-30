@@ -363,7 +363,9 @@ def do_next_command():
         if verbose:
             print(f"\n📊 Commit Analysis (since {latest_tag})")
             print("=" * 60)
-            print(f"Current version: v{current_version.major}.{current_version.minor}.{current_version.patch}")
+            print(
+                f"Current version: v{current_version.major}.{current_version.minor}.{current_version.patch}"
+            )
             print(f"Recommended bump: {analysis.bump_type.value}")
             print(f"Next version: v{next_version.major}.{next_version.minor}.{next_version.patch}")
             print(f"\nTotal commits analyzed: {analysis.commit_count}")
@@ -772,7 +774,9 @@ def do_auto_command():
                 except FileWriteError as e:
                     print(f"❌ {proj_type.ljust(10)} failed: {e}")
             else:
-                print(f"✅ {proj_type.ljust(10)} {current_proj_version} → v{next_version} (dry-run)")
+                print(
+                    f"✅ {proj_type.ljust(10)} {current_proj_version} → v{next_version} (dry-run)"
+                )
                 updated_count += 1
 
         # Create git tag
@@ -799,6 +803,7 @@ def do_auto_command():
     except Exception as e:
         print(f"❌ Error during auto workflow: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

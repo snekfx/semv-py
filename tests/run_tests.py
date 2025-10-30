@@ -19,12 +19,12 @@ def run_basic_tests():
     # Test imports
     print("\n1. Testing imports...")
     try:
-        from semvx.detection.detector import (
+        from semvx.detection import (
             compare_semver,
             get_highest_version,
-            get_repository_context,
             normalize_semver,
         )
+        from semvx.detection.detector import get_repository_context
 
         print("   ✅ Detection module imports successful")
     except ImportError as e:

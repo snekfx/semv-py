@@ -240,10 +240,14 @@ def get_repository_context(repo_path: Path) -> Dict:
         "type": repo_type,
         "branch": branch_name or "unknown",
         "is_clean": is_clean,
-        "last_commit": {
-            "hash": last_commit_hash,
-            "message": last_commit_msg,
-        } if last_commit_hash else None,
+        "last_commit": (
+            {
+                "hash": last_commit_hash,
+                "message": last_commit_msg,
+            }
+            if last_commit_hash
+            else None
+        ),
     }
 
     # Basic workspace detection (placeholder for future enhancement)

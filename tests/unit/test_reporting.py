@@ -2,8 +2,6 @@
 Tests for the reporting module.
 """
 
-
-
 from semvx.detection.reporting import (
     detect_dirty_directories,
     detect_emerging_tools,
@@ -139,12 +137,8 @@ class TestProjectValidation:
 
     def test_validate_project_structure_valid(self, tmp_path):
         """Test validation of valid project."""
-        (tmp_path / "Cargo.toml").write_text(
-            '[package]\nname = "test"\nversion = "1.2.3"'
-        )
-        projects = [
-            {"type": "rust", "version_file": "Cargo.toml", "version": "1.2.3"}
-        ]
+        (tmp_path / "Cargo.toml").write_text('[package]\nname = "test"\nversion = "1.2.3"')
+        projects = [{"type": "rust", "version_file": "Cargo.toml", "version": "1.2.3"}]
 
         result = validate_project_structure(tmp_path, projects)
         assert result["rust"]["ok"] is True
@@ -152,9 +146,7 @@ class TestProjectValidation:
 
     def test_validate_project_structure_no_version_file(self, tmp_path):
         """Test validation when version file doesn't exist."""
-        projects = [
-            {"type": "rust", "version_file": "Cargo.toml", "version": "1.2.3"}
-        ]
+        projects = [{"type": "rust", "version_file": "Cargo.toml", "version": "1.2.3"}]
 
         result = validate_project_structure(tmp_path, projects)
         assert result["rust"]["ok"] is False
