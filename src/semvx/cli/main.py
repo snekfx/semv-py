@@ -402,6 +402,210 @@ def do_next_command():
         sys.exit(1)
 
 
+def do_get_command():
+    """Get version from project files."""
+    # Parse arguments
+    proj_type = "all"  # default
+
+    if len(sys.argv) > 2:
+        proj_type = sys.argv[2].lower()
+
+    if proj_type not in ["all", "rust", "js", "python", "bash"]:
+        print(f"Unknown project type: {proj_type}", file=sys.stderr)
+        print("Valid types: all, rust, js, python, bash")
+        sys.exit(1)
+
+    try:
+        repo_path = Path.cwd()
+        context = get_repository_context(repo_path)
+
+        if proj_type == "all":
+            # Show all detected versions
+            print("📦 Version Sources")
+            print("=" * 60)
+
+            found_any = False
+            for project in context["projects"]:
+                ptype = project["type"]
+                version = project.get("version", "N/A")
+                vfile = project.get("version_file", "N/A")
+
+                print(f"\n{ptype.upper()}:")
+                print(f"  Version: {version}")
+                print(f"  File:    {vfile}")
+                found_any = True
+
+            # Git tag
+            if context["repository"]["type"] == "git":
+                git_repo = GitRepository(repo_path)
+                latest_tag = git_repo.get_latest_tag()
+                if latest_tag:
+                    print(f"\nGIT:")
+                    print(f"  Latest tag: {latest_tag}")
+                    found_any = True
+
+            if not found_any:
+                print("\nNo version sources detected.")
+
+            print("\n" + "=" * 60)
+
+        else:
+            # Get specific project type
+            project = next((p for p in context["projects"] if p["type"] == proj_type), None)
+
+            if not project:
+                print(f"No {proj_type} project detected.", file=sys.stderr)
+                sys.exit(1)
+
+            version = project.get("version", "N/A")
+            print(version)
+
+    except Exception as e:
+        print(f"Error getting version: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def do_set_command():
+    """Set version in project files."""
+    # Parse arguments
+    if len(sys.argv) < 4:
+        print("Usage: semvx set TYPE VERSION [FILE]", file=sys.stderr)
+        print("\nExamples:")
+        print("  semvx set python 2.1.0")
+        print("  semvx set rust 1.5.0")
+        print("  semvx set js 3.0.0")
+        sys.exit(1)
+
+    proj_type = sys.argv[2].lower()
+    new_version = sys.argv[3]
+    specific_file = sys.argv[4] if len(sys.argv) > 4 else None
+
+    if proj_type not in ["rust", "js", "python", "bash"]:
+        print(f"Unknown project type: {proj_type}", file=sys.stderr)
+        print("Valid types: rust, js, python, bash")
+        sys.exit(1)
+
+    try:
+        repo_path = Path.cwd()
+        context = get_repository_context(repo_path)
+
+        # Find the project
+        project = next((p for p in context["projects"] if p["type"] == proj_type), None)
+
+        if not project:
+            print(f"No {proj_type} project detected.", file=sys.stderr)
+            sys.exit(1)
+
+        # Get the version file
+        if specific_file:
+            version_file = repo_path / specific_file
+        else:
+            version_file = repo_path / project.get("version_file", "")
+
+        if not version_file.exists():
+            print(f"Version file not found: {version_file}", file=sys.stderr)
+            sys.exit(1)
+
+        # Write the new version
+        writer = VersionFileWriter()
+        writer.update_version(version_file, new_version, proj_type)
+
+        print(f"✅ Updated {proj_type} version to {new_version}")
+        print(f"   File: {version_file}")
+
+    except FileWriteError as e:
+        print(f"Error writing version: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error setting version: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def do_sync_command():
+    """Synchronize versions across all project files."""
+    # Parse arguments
+    source_file = None
+    if len(sys.argv) > 2:
+        source_file = Path(sys.argv[2])
+        if not source_file.exists():
+            print(f"Source file not found: {source_file}", file=sys.stderr)
+            sys.exit(1)
+
+    try:
+        repo_path = Path.cwd()
+        context = get_repository_context(repo_path)
+
+        if not context["projects"]:
+            print("No projects detected for synchronization.")
+            return
+
+        # Determine highest version
+        versions = []
+        for project in context["projects"]:
+            version = project.get("version")
+            if version and version != "N/A":
+                versions.append(version)
+
+        if not versions:
+            print("No versions found to synchronize.")
+            return
+
+        # Use source file version if specified
+        if source_file:
+            # Find project with this file
+            target_version = None
+            for project in context["projects"]:
+                if str(source_file).endswith(project.get("version_file", "")):
+                    target_version = project.get("version")
+                    break
+
+            if not target_version:
+                print(f"Could not determine version from {source_file}")
+                sys.exit(1)
+        else:
+            # Use highest version
+            from semvx.detection.foundations import get_highest_version
+
+            target_version = get_highest_version(versions)
+
+        print(f"🔄 Synchronizing to version: {target_version}")
+        print("=" * 60)
+
+        # Update all projects
+        writer = VersionFileWriter()
+        updated_count = 0
+
+        for project in context["projects"]:
+            proj_type = project["type"]
+            current_version = project.get("version", "N/A")
+            version_file = repo_path / project.get("version_file", "")
+
+            if not version_file.exists():
+                print(f"⚠️  Skipping {proj_type}: file not found")
+                continue
+
+            if current_version == target_version:
+                print(f"✓  {proj_type.ljust(10)} already at {target_version}")
+                continue
+
+            try:
+                writer.update_version(version_file, target_version, proj_type)
+                print(f"✅ {proj_type.ljust(10)} {current_version} → {target_version}")
+                updated_count += 1
+            except FileWriteError as e:
+                print(f"❌ {proj_type.ljust(10)} failed: {e}")
+
+        print("=" * 60)
+        print(f"Synchronized {updated_count} project(s)")
+
+    except Exception as e:
+        print(f"Error synchronizing versions: {e}", file=sys.stderr)
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)
+
+
 def do_bump_command():
     """Bump version for detected projects."""
     # Parse arguments
