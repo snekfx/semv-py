@@ -293,10 +293,11 @@
   - ✅ No sys.path hack present in codebase
   - ✅ Verified: semvx command works via entry point
   - ✅ Packaging and integration compatibility confirmed
-- [ ] **CLI-INTEG-01**: Wire bump command to SemanticVersion (3 SP)
-  - Connect bump command to SemanticVersion.bump_*() methods
-  - Add dry-run mode for testing
-  - Implement version display command
+- [x] **CLI-INTEG-01**: Wire bump command to SemanticVersion (3 SP) - DONE ✅
+  - ✅ Bump command uses SemanticVersion.bump_major/minor/patch() (main.py:642-650)
+  - ✅ Dry-run mode implemented with --dry-run flag
+  - ✅ Version display commands working: `semvx get`, `semvx version`
+  - ✅ Full semantic version parsing and increment logic
 - [ ] **ARCH-DET-01**: Split detection module into focused submodules (5 SP)
   - Split detection module into foundations, manifests, reporting
   - Reduce size and enable targeted imports
