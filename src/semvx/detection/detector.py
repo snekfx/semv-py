@@ -14,6 +14,8 @@ Note: Refactored into focused submodules:
 - detector.py: Orchestration and primary API
 """
 
+import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Union
 
@@ -174,24 +176,85 @@ def get_repository_context(repo_path: Path) -> Dict:
     script_metadata = detect_script_metadata(repo_path)
     dirty_directories = detect_dirty_directories(repo_path)
 
-    # Repository metadata (would extract from actual git/gitsim commands)
+    # Repository metadata (extract from git/gitsim with NDSR safeguards)
+    branch_name = None
+    is_clean = True
+    last_commit_hash = None
+    last_commit_msg = None
+
+    if repo_type in ["git", "gitsim"]:
+        try:
+            # Get current branch (timeout: 2s)
+            result = subprocess.run(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                timeout=2,
+                check=False,
+            )
+            if result.returncode == 0:
+                branch_name = result.stdout.strip()
+
+            # Check if repo is clean (timeout: 2s)
+            result = subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                timeout=2,
+                check=False,
+            )
+            if result.returncode == 0:
+                is_clean = not bool(result.stdout.strip())
+
+            # Get last commit hash (timeout: 2s)
+            result = subprocess.run(
+                ["git", "rev-parse", "--short=8", "HEAD"],
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                timeout=2,
+                check=False,
+            )
+            if result.returncode == 0:
+                last_commit_hash = result.stdout.strip()
+
+            # Get last commit message (timeout: 2s)
+            result = subprocess.run(
+                ["git", "log", "-1", "--pretty=%s"],
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                timeout=2,
+                check=False,
+            )
+            if result.returncode == 0:
+                last_commit_msg = result.stdout.strip()
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            # Fallback to defaults if git operations fail
+            pass
+
     repository_info = {
         "path": str(repo_path),
-        "root": str(repo_path),  # Add missing 'root' field
+        "root": str(repo_path),
         "type": repo_type,
-        "branch": "main",  # Would extract from git/gitsim
-        "is_clean": True,  # Would check git status
-        "last_commit": None,  # Would extract from git log
+        "branch": branch_name or "unknown",
+        "is_clean": is_clean,
+        "last_commit": {
+            "hash": last_commit_hash,
+            "message": last_commit_msg,
+        } if last_commit_hash else None,
     }
 
     # Basic workspace detection (placeholder for future enhancement)
     workspace_info = {"is_workspace": False, "type": None, "members": []}
 
-    # Detection metadata
+    # Detection metadata (with actual timestamp)
     meta_info = {
         "detector_version": "1.0.0",
-        "detection_time": "2025-09-23T10:30:00Z",  # Would use actual timestamp
-        "detection_duration_ms": 50,  # Would measure actual time
+        "detection_time": datetime.now(timezone.utc).isoformat(),
+        "detection_duration_ms": 0,  # Would measure if timing added
     }
 
     return {
