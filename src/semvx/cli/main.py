@@ -168,6 +168,10 @@ def main():
         do_gs_command()
         return
 
+    if len(sys.argv) > 1 and sys.argv[1] in ["pend", "pending"]:
+        do_pend_command()
+        return
+
     # Default: show help
     print_help()
 
@@ -203,6 +207,7 @@ COMMANDS:
     sync [FILE]         Synchronize versions across all project files
     new                 Initialize repository with v0.0.1 tag
     gs                  Show count of changed files in working tree
+    pend [LABEL]        Show pending commits since last tag (optional: feat, fix, etc.)
     bc                  Show current build count (total commits)
     build [FILE]        Generate build info file (default: .build_info)
     fetch               Fetch remote tags
@@ -1705,6 +1710,61 @@ def do_gs_command():
 
         # Exit code: 0 if changes exist, 1 if clean (matches bash semv behavior)
         sys.exit(0 if count > 0 else 1)
+
+    except GitError as e:
+        print(f"❌ Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def do_pend_command():
+    """Show pending commits since last tag."""
+    try:
+        repo_path = Path.cwd()
+        repo = GitRepository(repo_path)
+
+        # Parse optional label filter argument
+        label_filter = sys.argv[2] if len(sys.argv) > 2 else "any"
+
+        # Get latest tag
+        latest_tag = repo.get_latest_tag()
+        if not latest_tag:
+            print("❌ No tags found. Try 'semvx new' to initialize", file=sys.stderr)
+            sys.exit(1)
+
+        # Build git log command with optional grep filter
+        if label_filter != "any":
+            # Filter by specific label (e.g., "feat", "fix")
+            cmd = [
+                "git",
+                "log",
+                f"{latest_tag}..HEAD",
+                f"--grep=^{label_filter}:",
+                "--format=%h - %s",
+            ]
+        else:
+            # Show all commits
+            cmd = ["git", "log", f"{latest_tag}..HEAD", "--format=%h - %s"]
+
+        result = subprocess.run(
+            cmd, cwd=repo_path, capture_output=True, text=True, check=False
+        )
+
+        if result.returncode != 0:
+            print(f"❌ Git error: {result.stderr.strip()}", file=sys.stderr)
+            sys.exit(1)
+
+        commits = result.stdout.strip()
+
+        if commits:
+            print(f"Found changes ({label_filter}) since {latest_tag}:", file=sys.stderr)
+            print(commits)
+            sys.exit(0)
+        else:
+            print(f"No labeled ({label_filter}:) commits after {latest_tag}", file=sys.stderr)
+            sys.exit(1)
 
     except GitError as e:
         print(f"❌ Error: {e}", file=sys.stderr)
