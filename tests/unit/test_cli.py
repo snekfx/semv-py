@@ -22,9 +22,11 @@ class TestCLIMain:
         with patch.object(sys, "argv", ["semvx", "--version"]):
             main()
         captured = capsys.readouterr()
-        # Should output version from pyproject.toml
-        assert "semvx" in captured.out
+        # Should output version from pyproject.toml with branding
+        assert "Version:" in captured.out
         assert "1.3.0" in captured.out
+        assert "AGPL-3.0" in captured.out
+        assert "Copyright" in captured.out
 
     def test_help_flag(self, capsys):
         """Test --help flag output."""
