@@ -60,8 +60,40 @@ install_editable() {
 
     cd "$ROOT_DIR"
 
-    # Install in editable mode with dev dependencies
-    if pip3 install -e ".[dev]" --user; then
+    # Try regular install first
+    if pip3 install -e ".[dev]" --user 2>&1 | grep -q "externally-managed"; then
+        print_info "PEP 668: System Python is externally managed"
+        print_info "Options:"
+        echo "  1. Use virtual environment (recommended)"
+        echo "  2. Use pipx (isolated environment)"
+        echo "  3. Override with --break-system-packages (not recommended)"
+        echo ""
+        read -p "Choose option (1/2/3) or press Enter to create venv: " choice
+
+        case "$choice" in
+            2)
+                return 1  # Will be handled by pipx install
+                ;;
+            3)
+                if pip3 install -e ".[dev]" --user --break-system-packages; then
+                    print_success "Installed semvx in editable mode (system override)"
+                    return 0
+                else
+                    print_error "Failed to install"
+                    return 1
+                fi
+                ;;
+            *)
+                print_info "Creating virtual environment..."
+                python3 -m venv ~/.local/venv/semvx || return 1
+                source ~/.local/venv/semvx/bin/activate || return 1
+                pip install -e ".[dev]" || return 1
+                print_success "Installed in venv: ~/.local/venv/semvx"
+                print_info "Activate with: source ~/.local/venv/semvx/bin/activate"
+                return 0
+                ;;
+        esac
+    elif pip3 install -e ".[dev]" --user; then
         print_success "Installed semvx in editable mode"
         return 0
     else
@@ -75,8 +107,40 @@ install_regular() {
 
     cd "$ROOT_DIR"
 
-    # Regular install
-    if pip3 install . --user; then
+    # Try regular install first
+    if pip3 install . --user 2>&1 | grep -q "externally-managed"; then
+        print_info "PEP 668: System Python is externally managed"
+        print_info "Options:"
+        echo "  1. Use virtual environment (recommended)"
+        echo "  2. Use pipx (isolated environment)"
+        echo "  3. Override with --break-system-packages (not recommended)"
+        echo ""
+        read -p "Choose option (1/2/3) or press Enter to create venv: " choice
+
+        case "$choice" in
+            2)
+                return 1  # Will be handled by pipx install
+                ;;
+            3)
+                if pip3 install . --user --break-system-packages; then
+                    print_success "Installed semvx (system override)"
+                    return 0
+                else
+                    print_error "Failed to install"
+                    return 1
+                fi
+                ;;
+            *)
+                print_info "Creating virtual environment..."
+                python3 -m venv ~/.local/venv/semvx || return 1
+                source ~/.local/venv/semvx/bin/activate || return 1
+                pip install . || return 1
+                print_success "Installed in venv: ~/.local/venv/semvx"
+                print_info "Activate with: source ~/.local/venv/semvx/bin/activate"
+                return 0
+                ;;
+        esac
+    elif pip3 install . --user; then
         print_success "Installed semvx"
         return 0
     else
