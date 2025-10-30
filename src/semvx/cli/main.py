@@ -156,13 +156,8 @@ def main():
         do_precommit_command()
         return
 
-    # Default help message
-    try:
-        semvx_version = version("semvx")
-    except Exception:
-        semvx_version = "unknown"
-    print(f"semvx {semvx_version} - Semantic Version Manager (Python Edition)")
-    print("Use 'semvx --help' for usage information.")
+    # Default: show help
+    print_help()
 
 
 def print_help():
@@ -238,6 +233,20 @@ EXAMPLES:
     semvx tag                   # Create git tag for current version
     semvx tags                  # List all version tags
     semvx --version             # Show semvx version
+
+COMMIT LABELS:
+    Commit message prefixes automatically determine version bumps:
+
+    major, breaking, api        → Major version bump (breaking changes)
+    feat, feature, add, minor   → Minor version bump (new features)
+    fix, patch, bug, hotfix, up → Patch version bump (fixes/updates)
+    dev                         → Development build (no version bump)
+
+    Examples:
+        feat: add new user authentication
+        fix: resolve memory leak in parser
+        breaking: change API endpoint structure
+        dev: update development documentation
 
 ENVIRONMENT VARIABLES:
     SEMVX_VIEW          Same as --view flag (normal|data)

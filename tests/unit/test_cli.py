@@ -43,9 +43,12 @@ class TestCLIMain:
         with patch.object(sys, "argv", ["semvx"]):
             main()
         captured = capsys.readouterr()
-        # Should show version from pyproject.toml and help message
-        assert "semvx 1.3.0" in captured.out
-        assert "Use 'semvx --help'" in captured.out
+        # Should show full help menu with branding
+        assert "Version:" in captured.out
+        assert "1.3.0" in captured.out
+        assert "USAGE:" in captured.out
+        assert "COMMANDS:" in captured.out
+        assert "COMMIT LABELS:" in captured.out
 
     @patch("semvx.cli.main.do_detection")
     def test_detect_command(self, mock_detect):
@@ -238,6 +241,12 @@ class TestHelp:
         # Check for examples
         assert "semvx detect" in captured.out
         assert "semvx status" in captured.out
+
+        # Check for commit labels section
+        assert "COMMIT LABELS:" in captured.out
+        assert "major, breaking, api" in captured.out
+        assert "feat, feature, add, minor" in captured.out
+        assert "fix, patch, bug, hotfix, up" in captured.out
 
         # Check for notes
         assert "Python rewrite" in captured.out
