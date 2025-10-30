@@ -87,6 +87,10 @@ def main():
         do_status()
         return
 
+    if len(sys.argv) > 1 and sys.argv[1] == "info":
+        do_info_command()
+        return
+
     # Version management commands
     if len(sys.argv) > 1 and sys.argv[1] == "auto":
         do_auto_command()
@@ -156,6 +160,10 @@ def main():
         do_precommit_command()
         return
 
+    if len(sys.argv) > 1 and sys.argv[1] == "new":
+        do_new_command()
+        return
+
     # Default: show help
     print_help()
 
@@ -182,12 +190,14 @@ def print_help():
     semvx [COMMAND] [OPTIONS]
 
 COMMANDS:
+    info                Show current project version (simple output)
     detect              Detect project types and versions in current directory
     status              Show current version status for all projects
     next                Calculate next version based on commit analysis (dry run)
     get [TYPE]          Get version from project files (all|rust|js|python|bash)
     set TYPE VER [FILE] Set version in project files
     sync [FILE]         Synchronize versions across all project files
+    new                 Initialize repository with v0.0.1 tag
     bc                  Show current build count (total commits)
     build [FILE]        Generate build info file (default: .build_info)
     fetch               Fetch remote tags
@@ -209,6 +219,8 @@ GLOBAL FLAGS:
                         - data: Machine-readable JSON for AI agents
 
 EXAMPLES:
+    semvx info                  # Show current version (v1.2.3)
+    semvx new                   # Initialize new repo with v0.0.1
     semvx detect                # Analyze current directory for projects
     semvx status                # Show version status for all detected projects
     semvx status --view=data    # Get status as JSON for AI agents
@@ -258,6 +270,80 @@ NOTE: This is the Python rewrite of SEMV with namespace separation.
 For detailed documentation: docs/procs/PROCESS.md
 """
     )
+
+
+def do_info_command():
+    """Show current project version (like bash semv info)."""
+    try:
+        repo_path = Path.cwd()
+        git_repo = GitRepository(repo_path)
+
+        # Get latest version tag
+        latest_tag = git_repo.get_latest_tag()
+        if latest_tag:
+            print(latest_tag)
+        else:
+            print("v0.0.0")
+    except Exception as e:
+        print(f"❌ Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def do_new_command():
+    """Initialize repository with v0.0.1 tag."""
+    try:
+        repo_path = Path.cwd()
+
+        # Safety check 1: Verify it's a git repository
+        try:
+            git_repo = GitRepository(repo_path)
+        except Exception:
+            print("❌ Not a git repository", file=sys.stderr)
+            print("   Run 'git init' first", file=sys.stderr)
+            sys.exit(1)
+
+        # Safety check 2: Check for existing semver tags
+        existing_tags = git_repo.list_tags(pattern="v*")
+        if existing_tags:
+            print("❌ Repository already has version tags:", file=sys.stderr)
+            for tag in existing_tags[:5]:  # Show first 5
+                print(f"   - {tag}", file=sys.stderr)
+            if len(existing_tags) > 5:
+                print(f"   ... and {len(existing_tags) - 5} more", file=sys.stderr)
+            sys.exit(1)
+
+        # Create initial version
+        initial_version = SemanticVersion(0, 0, 1)
+
+        # Update version files if they exist
+        context = get_repository_context(repo_path)
+        updated_files = []
+
+        for project in context.get("projects", []):
+            version_file = project.get("version_file")
+            if version_file:
+                success, message = VersionFileWriter.update_version_in_file(
+                    Path(version_file), initial_version, backup=True
+                )
+                if success:
+                    updated_files.append(version_file)
+
+        # Create the git tag
+        success, message = GitVersionTagger.create_version_tag(git_repo, initial_version)
+
+        if not success:
+            print(f"❌ {message}", file=sys.stderr)
+            sys.exit(1)
+
+        print("✅ Initialized with v0.0.1")
+        if updated_files:
+            print(f"   Updated {len(updated_files)} version file(s):")
+            for file in updated_files:
+                print(f"   - {file}")
+
+    except Exception as e:
+        print(f"❌ Error: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 def do_detection():

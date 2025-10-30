@@ -251,3 +251,83 @@ class TestHelp:
         # Check for notes
         assert "Python rewrite" in captured.out
         assert "namespace separation" in captured.out
+
+        # Check for new commands (GAPS-01, GAPS-06)
+        assert "info" in captured.out
+        assert "new" in captured.out
+
+
+class TestInfoCommand:
+    """Test info command functionality."""
+
+    @patch("semvx.cli.main.GitRepository")
+    def test_info_with_tag(self, mock_git_class, capsys):
+        """Test info command with existing tag."""
+        mock_repo = mock_git_class.return_value
+        mock_repo.get_latest_tag.return_value = "v1.2.3"
+
+        with patch.object(sys, "argv", ["semvx", "info"]):
+            main()
+
+        captured = capsys.readouterr()
+        assert "v1.2.3" in captured.out
+
+    @patch("semvx.cli.main.GitRepository")
+    def test_info_without_tag(self, mock_git_class, capsys):
+        """Test info command without existing tags."""
+        mock_repo = mock_git_class.return_value
+        mock_repo.get_latest_tag.return_value = None
+
+        with patch.object(sys, "argv", ["semvx", "info"]):
+            main()
+
+        captured = capsys.readouterr()
+        assert "v0.0.0" in captured.out
+
+
+class TestNewCommand:
+    """Test new command functionality."""
+
+    @patch("semvx.cli.main.get_repository_context")
+    @patch("semvx.cli.main.GitVersionTagger")
+    @patch("semvx.cli.main.GitRepository")
+    def test_new_creates_initial_tag(self, mock_git_class, mock_tagger, mock_get_context, capsys):
+        """Test new command creates v0.0.1 tag."""
+        mock_repo = mock_git_class.return_value
+        mock_repo.list_tags.return_value = []  # No existing tags
+        mock_tagger.create_version_tag.return_value = (True, "Success")
+        mock_get_context.return_value = {"projects": []}
+
+        with patch.object(sys, "argv", ["semvx", "new"]):
+            main()
+
+        captured = capsys.readouterr()
+        assert "✅ Initialized with v0.0.1" in captured.out
+        mock_tagger.create_version_tag.assert_called_once()
+
+    @patch("semvx.cli.main.GitRepository")
+    def test_new_rejects_existing_tags(self, mock_git_class, capsys):
+        """Test new command rejects repo with existing tags."""
+        mock_repo = mock_git_class.return_value
+        mock_repo.list_tags.return_value = ["v1.0.0", "v1.1.0"]
+
+        with patch.object(sys, "argv", ["semvx", "new"]):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+
+        assert exc_info.value.code == 1
+        captured = capsys.readouterr()
+        assert "already has version tags" in captured.err
+
+    @patch("semvx.cli.main.GitRepository")
+    def test_new_rejects_non_git_repo(self, mock_git_class, capsys):
+        """Test new command rejects non-git repository."""
+        mock_git_class.side_effect = Exception("Not a git repo")
+
+        with patch.object(sys, "argv", ["semvx", "new"]):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+
+        assert exc_info.value.code == 1
+        captured = capsys.readouterr()
+        assert "Not a git repository" in captured.err

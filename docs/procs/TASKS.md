@@ -330,6 +330,99 @@
 
 ---
 
+## 📋 FEATURE GAPS - Missing Commands (2025-10-30)
+
+**Status:** 🟡 Command parity with bash semv at 73% (19/26 commands implemented)
+
+See [docs/procs/GAPS.md](./GAPS.md) for detailed analysis and implementation specifications.
+
+### 🔴 High Priority (5 SP)
+
+- [x] **GAPS-01**: Implement `info` command (2 SP) - ✅ DONE
+  - Show current project version (simple output)
+  - Outputs just the version tag: `v1.2.3` or `v0.0.0`
+  - **Implemented:**
+    - Created `do_info_command()` function
+    - Uses GitRepository.get_latest_tag()
+    - Falls back to v0.0.0 if no tags exist
+  - **Files:** src/semvx/cli/main.py:267-285
+
+- [x] **GAPS-06**: Implement `new` command (3 SP) - ✅ DONE
+  - Initialize repository with v0.0.1 tag
+  - Safety checks to prevent overwriting existing versions
+  - **Implemented:**
+    - Verifies git repository exists
+    - Checks for existing semver tags (rejects if found)
+    - Creates initial v0.0.1 tag
+    - Updates version files if present
+  - **Files:** src/semvx/cli/main.py:288-342
+  - **Tests:** tests/unit/test_cli.py:260-335 (5 new tests)
+
+### 🟡 Medium Priority (6 SP)
+
+- [ ] **GAPS-02**: Implement `gs` command (1 SP)
+  - Git working tree status - count of changed files
+  - Output just a number (for scripting): `semv gs` → `5`
+  - **Technical approach:**
+    - Use GitRepository.get_changed_files()
+    - Print count only
+  - **Files:** src/semvx/cli/main.py
+
+- [ ] **GAPS-03**: Implement `pend` command (2 SP)
+  - Show pending changes since last tag
+  - List commit messages waiting for next version
+  - **Technical approach:**
+    - Use CommitAnalyzer.get_commits_since_tag()
+    - Format and display commit list
+    - Similar to `semvx next --verbose` but focused on listing
+  - **Files:** src/semvx/cli/main.py, src/semvx/core/commit_analyzer.py
+
+- [ ] **GAPS-07**: Implement `can` command (2 SP)
+  - Check if repository can use semver
+  - Validates: git repo exists, has commits, has version files
+  - Exit code 0 (can) or 1 (cannot) for scripting
+  - **Technical approach:**
+    - Check git repository
+    - Check for commits
+    - Detect version files
+    - Provide detailed feedback
+  - **Files:** src/semvx/cli/main.py
+
+### 🟢 Low Priority (2 SP)
+
+- [ ] **GAPS-04**: Implement `since` command (1 SP)
+  - Time since last commit
+  - Human-readable output: "2 days ago", "3 hours ago"
+  - **Technical approach:**
+    - Get last commit timestamp
+    - Calculate time difference
+    - Format as human-readable string
+  - **Files:** src/semvx/cli/main.py
+
+- [ ] **GAPS-05**: Implement `rbc` command (1 SP)
+  - Remote build count comparison
+  - Shows: `Local: 156 | Remote: 150 | Ahead: 6`
+  - Extension of existing `upst` command logic
+  - **Technical approach:**
+    - Get local build count (total commits)
+    - Get remote build count
+    - Calculate and display difference
+  - **Files:** src/semvx/cli/main.py
+
+### Gaps Summary
+
+| Priority | Commands | SP | Completion |
+|----------|----------|-----|------------|
+| 🔴 High | 2 | 5 SP | 100% ✅ |
+| 🟡 Medium | 3 | 6 SP | 0% |
+| 🟢 Low | 2 | 2 SP | 0% |
+| **Total** | **7** | **13 SP** | **38%** |
+
+**Current Command Parity:** 21/26 commands (81%) ⬆️ +8%
+**After GAPS Complete:** 26/26 commands (100%)
+
+---
+
 ## 🚨 PRIORITY FIXES (From Codex Review)
 
 ### P1 - CRITICAL (Must fix before proceeding)
@@ -612,6 +705,8 @@
 
 | Phase | Story Points | Status | Priority |
 |-------|-------------|--------|----------|
+| **Bug Fixes** | **11 SP** | **✅ Complete** | **CRITICAL** |
+| **Feature Gaps** | **13 SP** | **⏳ Pending** | **HIGH** |
 | Phase 1 (Foundation) | 18 SP | 🔄 50% Complete | HIGH |
 | Phase 2 (Architecture) | 19 SP | ✅ 85% Complete | HIGH |
 | Phase 3 (Core Implementation) | 39 SP | 🔄 20% Complete | HIGH |
@@ -621,10 +716,17 @@
 | Derived Tasks | 7 SP | ⏳ Pending | LOW |
 | Priority Fixes | 20 SP | ✅ Complete | CRITICAL |
 
-**Total Project**: 184 Story Points (8 complete, 176 remaining)
+**Total Project**: 208 Story Points (50 complete, 158 remaining)
+
+### Current Status (2025-10-30)
+- ✅ **All critical bugs fixed** (BUGS-01 through BUGS-09)
+- ✅ **144 tests passing** with 0 errors
+- ✅ **CI/CD pipeline green** (linting, type checking, coverage)
+- 🟡 **Command parity: 73%** (19/26 commands implemented)
+- 🔄 **Feature Gaps identified** (GAPS-01 through GAPS-07, 13 SP)
 
 ---
 
-**Last Updated**: Phase 1 implementation
-**Next Review**: After Phase 1 completion
-**Estimation Confidence**: High for Phases 1-2, Medium for Phases 3-6
+**Last Updated**: 2025-10-30 (Post bug fixes and gaps analysis)
+**Next Review**: After GAPS Phase 1 (High Priority) completion
+**Estimation Confidence**: High for Phases 1-3, Medium for Phases 4-6
