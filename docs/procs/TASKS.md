@@ -288,10 +288,11 @@
   - ✅ All 43 tests now passing (was 42/43)
 
 ### P3 - MEDIUM PRIORITY
-- [ ] **QOL-CLI-01**: Replace CLI sys.path hack with console-script entry point (2 SP)
-  - Replace sys.path hack at src/semvx/cli/main.py:10
-  - Use proper console-script entry point wiring
-  - Improves packaging and integration compatibility
+- [x] **QOL-CLI-01**: Replace CLI sys.path hack with console-script entry point (2 SP) - DONE ✅
+  - ✅ Console-script properly configured in pyproject.toml:52
+  - ✅ No sys.path hack present in codebase
+  - ✅ Verified: semvx command works via entry point
+  - ✅ Packaging and integration compatibility confirmed
 - [ ] **CLI-INTEG-01**: Wire bump command to SemanticVersion (3 SP)
   - Connect bump command to SemanticVersion.bump_*() methods
   - Add dry-run mode for testing
