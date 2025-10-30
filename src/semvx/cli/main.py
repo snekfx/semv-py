@@ -26,6 +26,34 @@ from semvx.integrations.boxy import (
 from semvx.integrations.rolo import format_as_table, is_rolo_available
 
 
+def load_logo() -> str:
+    """Load ASCII logo from logo.txt file."""
+    logo_path = Path(__file__).parent.parent.parent.parent / "logo.txt"
+    try:
+        if logo_path.exists():
+            return logo_path.read_text()
+        return ""
+    except Exception:
+        return ""
+
+
+def print_version():
+    """Print version with branding."""
+    try:
+        semvx_version = version("semvx")
+    except Exception:
+        semvx_version = "unknown"
+
+    logo = load_logo()
+    if logo:
+        print(logo.rstrip())
+
+    print(f"Version: {semvx_version} | License: AGPL-3.0")
+    print("Copyright © 2025 Qodeninja/SnekFX")
+    print()
+    print("📊 Semantic Version Manager for Modern Development")
+
+
 def main():
     """Main CLI entry point."""
     # Parse global flags
@@ -43,11 +71,7 @@ def main():
     sys.argv = [sys.argv[0]] + args
 
     if len(sys.argv) > 1 and sys.argv[1] in ["--version", "-v"]:
-        try:
-            semvx_version = version("semvx")
-        except Exception:
-            semvx_version = "unknown"
-        print(f"semvx {semvx_version}")
+        print_version()
         return
 
     if len(sys.argv) > 1 and sys.argv[1] in ["--help", "-h"]:
@@ -148,9 +172,13 @@ def print_help():
     except Exception:
         semvx_version = "unknown"
 
+    logo = load_logo()
+    if logo:
+        print(logo.rstrip())
+        print()
+
     print(
-        f"""
-semvx {semvx_version} - Semantic Version Manager (Python Edition)
+        f"""semvx {semvx_version} - Semantic Version Manager (Python Edition)
 
 USAGE:
     semvx [COMMAND] [OPTIONS]
