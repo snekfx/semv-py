@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 from semvx.core.build_info import BuildInfo
-from semvx.core.commit_analyzer import CommitAnalyzer
+from semvx.core.commit_analyzer import BumpType, CommitAnalyzer
 from semvx.core.file_writer import FileWriteError, VersionFileWriter
 from semvx.core.git_ops import GitError, GitRepository, GitVersionTagger
 from semvx.core.repository_status import RepositoryAnalyzer
@@ -283,6 +283,108 @@ def do_status():
         import traceback
 
         traceback.print_exc()
+        sys.exit(1)
+
+
+def do_next_command():
+    """Calculate and display the next version based on commit analysis."""
+    # Parse arguments
+    verbose = False
+
+    for arg in sys.argv[2:]:
+        if arg in ["--verbose", "-v"]:
+            verbose = True
+        elif arg in ["--help", "-h"]:
+            print("Usage: semvx next [--verbose|-v]")
+            print("\nCalculate next version based on commit message analysis.")
+            print("\nOptions:")
+            print("  --verbose, -v    Show detailed commit analysis")
+            return
+
+    try:
+        repo_path = Path.cwd()
+
+        # Get git repository
+        git_repo = GitRepository(repo_path)
+
+        # Get latest tag
+        latest_tag = git_repo.get_latest_tag()
+
+        if not latest_tag:
+            print("v0.1.0")
+            if verbose:
+                print("\nℹ️  No tags found. Recommending initial version v0.1.0")
+            return
+
+        # Parse current version
+        try:
+            current_version = SemanticVersion.parse(latest_tag)
+        except VersionParseError:
+            print(f"⚠️  Could not parse tag '{latest_tag}' as semantic version", file=sys.stderr)
+            sys.exit(1)
+
+        # Analyze commits since last tag
+        analyzer = CommitAnalyzer(repo_path)
+        analysis = analyzer.analyze_commits_since_tag(latest_tag)
+
+        # Calculate next version
+        if analysis.bump_type == BumpType.MAJOR:
+            next_version = current_version.bump_major()
+        elif analysis.bump_type == BumpType.MINOR:
+            next_version = current_version.bump_minor()
+        elif analysis.bump_type == BumpType.PATCH:
+            next_version = current_version.bump_patch()
+        else:
+            # No significant commits
+            next_version = current_version.bump_patch()
+
+        # Output next version
+        print(f"v{next_version.major}.{next_version.minor}.{next_version.patch}")
+
+        # Verbose output
+        if verbose:
+            print(f"\n📊 Commit Analysis (since {latest_tag})")
+            print("=" * 60)
+            print(f"Current version: v{current_version.major}.{current_version.minor}.{current_version.patch}")
+            print(f"Recommended bump: {analysis.bump_type.value}")
+            print(f"Next version: v{next_version.major}.{next_version.minor}.{next_version.patch}")
+            print(f"\nTotal commits analyzed: {analysis.commit_count}")
+
+            if analysis.major_commits:
+                print(f"\n🔴 Major changes ({len(analysis.major_commits)}):")
+                for commit in analysis.major_commits[:5]:
+                    print(f"  - {commit}")
+                if len(analysis.major_commits) > 5:
+                    print(f"  ... and {len(analysis.major_commits) - 5} more")
+
+            if analysis.minor_commits:
+                print(f"\n🟡 Minor changes ({len(analysis.minor_commits)}):")
+                for commit in analysis.minor_commits[:5]:
+                    print(f"  - {commit}")
+                if len(analysis.minor_commits) > 5:
+                    print(f"  ... and {len(analysis.minor_commits) - 5} more")
+
+            if analysis.patch_commits:
+                print(f"\n🟢 Patch changes ({len(analysis.patch_commits)}):")
+                for commit in analysis.patch_commits[:5]:
+                    print(f"  - {commit}")
+                if len(analysis.patch_commits) > 5:
+                    print(f"  ... and {len(analysis.patch_commits) - 5} more")
+
+            if analysis.ignored_commits:
+                print(f"\n⚪ Ignored commits ({len(analysis.ignored_commits)}):")
+                for commit in analysis.ignored_commits[:3]:
+                    print(f"  - {commit}")
+                if len(analysis.ignored_commits) > 3:
+                    print(f"  ... and {len(analysis.ignored_commits) - 3} more")
+
+            print("\n" + "=" * 60)
+
+    except GitError as e:
+        print(f"Git error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error calculating next version: {e}", file=sys.stderr)
         sys.exit(1)
 
 

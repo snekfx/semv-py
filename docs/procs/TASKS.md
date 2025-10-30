@@ -167,7 +167,7 @@
 
   **Priority:** HIGH - Blocks bash semv feature parity (primary pillar)
 
-- [ ] **BUGS-04** (HIGH - 2-3 SP) - Missing next Command
+- [x] **BUGS-04** (HIGH - 2-3 SP) - Missing next Command ✅ FIXED
   **Problem:** Similar to BUGS-03 but for next command
   - TASKS.md marks FEAT-NEXT-01 as ✅ DONE
   - Claims: "Implemented as part of commit analysis feature"
