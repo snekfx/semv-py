@@ -322,11 +322,165 @@
 - ~~Full (implement features): 9-11 SP (~11 hours)~~ ✅ ALL FIXED
 - ~~Remaining: 3 SP (~3 hours) - Type checking errors~~ ✅ ALL FIXED
 
-**Status:** 🎉 ALL BUGS FIXED! (BUGS-01 through BUGS-09)
-- All critical, high, medium, and low priority bugs resolved
+**Status:** 🟡 BUGS-01 through BUGS-09 FIXED, New bugs identified (BUGS-10 through BUGS-12)
+- All previously known bugs resolved (BUGS-01 through BUGS-09) ✅
 - CI/CD passing with all checks green ✅
 - 144 tests passing
 - mypy type checking: 0 errors
+- **New bugs identified from 2025-11-04 code review** (see REVIEW_FINDINGS.md)
+
+---
+
+## 🔬 NEW BUGS FROM CODE REVIEW (2025-11-04)
+
+### RESEARCH Priority (Needs Investigation)
+
+- [ ] **BUGS-10** (RESEARCH - 2 SP) - Repository Context Contamination in Subdirectories
+  **Problem:** semvx may show wrong repository information when invoked from subdirectories
+  - When run from `/parent/child/` directory, git commands may traverse to parent repo
+  - Test case: `cd test-proj && semvx status` shows parent repo name instead of test-proj
+  - Affects: status, info, and all git operations
+
+  **Possible Causes:**
+  - ⚠️ May be gitsim-specific issue (gitsim repos nested in git repos)
+  - ⚠️ May be test environment artifact (cloud environment limitations)
+  - ⚠️ May be actual bug in GitRepository class not validating repo root
+
+  **Impact:**
+  - ❓ Unknown if affects production usage (needs verification)
+  - ⚠️ Makes gitsim testing unreliable
+  - ⚠️ Could cause data corruption if user operates on wrong repo
+
+  **Research Required:**
+  1. Test in clean environment (local Linux/macOS)
+  2. Test with real git repos (non-gitsim)
+  3. Test with nested git repos
+  4. Verify GitRepository validates repo root == cwd
+  5. Check if subprocess calls pass `cwd` parameter correctly
+
+  **If Real Bug - Fix Required:**
+  - Add repo root validation to GitRepository.__init__()
+  - Always pass `cwd` parameter to subprocess calls
+  - Detect and handle nested git repositories
+  - Add integration tests for subdirectory operations
+
+  **Files:**
+  - src/semvx/core/git_ops.py (GitRepository class)
+  - src/semvx/core/repository_status.py (RepositoryAnalyzer)
+
+  **Priority:** RESEARCH - Verify before treating as bug
+  **Reported:** 2025-11-04 code review (see REVIEW_FINDINGS.md BUG-001)
+
+### HIGH Priority (Confirmed Bugs)
+
+- [ ] **BUGS-11** (HIGH - 3 SP) - Commit Analysis Broken in gitsim Repositories
+  **Problem:** CommitAnalyzer returns 0 commits when analyzing gitsim repos
+  - Uses standard `git log` commands which don't read `.gitsim/` directory
+  - semvx next always shows "0 commits analyzed"
+  - Version bump calculation defaults to patch (wrong!)
+
+  **Evidence:**
+  ```bash
+  # In gitsim repo with 3 commits (fix, feat, breaking)
+  $ semvx next --verbose
+  Total commits analyzed: 0
+  Next version: v0.1.1  # Wrong! Should be v1.0.0 (breaking change)
+  ```
+
+  **Root Cause:**
+  - gitsim stores commits in `.gitsim/.data/` not `.git/`
+  - Standard git commands don't see gitsim commits
+  - No abstraction layer for git vs gitsim operations
+  - Detection module correctly identifies "gitsim" repo type but execution layer ignores it
+
+  **Impact:**
+  - ❌ Version bump calculation completely broken in gitsim repos
+  - ❌ Makes gitsim testing impossible
+  - ❌ "next" command always returns wrong version
+  - ⚠️ May affect production if users have gitsim-like structures
+
+  **Fix Required:**
+  1. Detect repository type in CommitAnalyzer (git vs gitsim)
+  2. Create git command abstraction layer:
+     - `_run_git_command()` → checks repo type
+     - Routes to `git` or gitsim API based on type
+  3. Or document gitsim as unsupported and skip in detection
+  4. Add integration tests with gitsim repos
+
+  **Files:**
+  - src/semvx/core/commit_analyzer.py:119-145 (_get_commits_since)
+  - src/semvx/core/git_ops.py (needs abstraction layer)
+  - src/semvx/detection/foundations.py (detect_repository_type already works)
+
+  **Priority:** HIGH - Breaks core functionality in gitsim environments
+  **Reported:** 2025-11-04 code review (see REVIEW_FINDINGS.md BUG-002)
+
+### MEDIUM Priority (Behavior Changes)
+
+- [ ] **BUGS-12** (MEDIUM - 1 SP) - Aggressive Default Commit Classification
+  **Problem:** Unlabeled commits treated as PATCH, differs from bash semv
+  - commit_analyzer.py:186 defaults to `BumpType.PATCH`
+  - bash semv only counts explicitly labeled commits
+  - Unlabeled commits should be ignored or treated as DEV
+
+  **Code:**
+  ```python
+  # src/semvx/core/commit_analyzer.py:184-186
+  # Default: treat as patch if no prefix matches
+  # (conservative approach - any unlabeled commit is a patch)
+  return BumpType.PATCH
+  ```
+
+  **Bash semv behavior:**
+  - Only counts: `major|breaking|api`, `feat|feature|minor`, `fix|patch|bug`
+  - Ignores: unlabeled, `doc:`, `admin:`, `lic:`, `clean:`
+  - More conservative: explicit is better than implicit
+
+  **Impact:**
+  - ⚠️ Can cause unexpected version bumps from maintenance commits
+  - ⚠️ Breaks compatibility with bash semv workflows
+  - ⚠️ Documentation claims to follow "semv conventions" but diverges
+
+  **Examples:**
+  - Commit: "update README" → semvx treats as PATCH (wrong!)
+  - Commit: "refactor internal function" → semvx treats as PATCH (wrong!)
+  - Should require explicit labels: "fix: update README"
+
+  **Fix Required:**
+  - Change default return to `BumpType.NONE` or `BumpType.DEV`
+  - Update documentation to clarify behavior
+  - Add tests for unlabeled commit handling
+  - Consider adding `--strict` flag for bash semv compatibility
+
+  **Files:**
+  - src/semvx/core/commit_analyzer.py:184-186
+  - tests/unit/test_commit_analyzer.py (add tests)
+  - docs/procs/PROCESS.md (document behavior)
+
+  **Priority:** MEDIUM - Affects version calculation accuracy
+  **Reported:** 2025-11-04 code review (see REVIEW_FINDINGS.md BUG-003)
+
+### Bug Summary (Updated)
+
+| Bug | Priority | SP | Impact | Status |
+|-----|----------|-----|--------|--------|
+| BUGS-01 | BLOCKER | 0.5 | Tool won't start | ✅ FIXED |
+| BUGS-02 | BLOCKER | 1.5 | Can't deploy | ✅ FIXED |
+| BUGS-03 | HIGH | 2-4 | Missing get/set/sync | ✅ FIXED |
+| BUGS-04 | HIGH | 2-3 | Missing next | ✅ FIXED |
+| BUGS-05 | MEDIUM | 0.5 | Version mismatch | ✅ FIXED |
+| BUGS-06 | LOW | 0.5 | Duplicate code | ✅ FIXED |
+| BUGS-07 | LOW | 1 | mypy version.py | ✅ FIXED |
+| BUGS-08 | LOW | 1 | mypy foundations.py | ✅ FIXED |
+| BUGS-09 | LOW | 1 | mypy reporting.py | ✅ FIXED |
+| **BUGS-10** | **RESEARCH** | **2** | **Subdirectory context** | **⏳ NEEDS VERIFY** |
+| **BUGS-11** | **HIGH** | **3** | **gitsim commits** | **🔴 NEW** |
+| **BUGS-12** | **MEDIUM** | **1** | **Commit classification** | **🔴 NEW** |
+
+**Total Bug Fix Effort:**
+- ~~Previous bugs (BUGS-01 to BUGS-09): 11 SP~~ ✅ ALL FIXED
+- **New bugs identified: 6 SP (2 SP research + 3 SP high + 1 SP medium)**
+- **Total remaining: 6 SP (~6 hours)**
 
 ---
 
