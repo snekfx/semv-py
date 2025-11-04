@@ -5,6 +5,9 @@ _archive
 *.py[codz]
 *$py.class
 
+# Temporary test artifacts
+tmp/
+
 # C extensions
 *.so
 
