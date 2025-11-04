@@ -417,24 +417,29 @@
 
 ### MEDIUM Priority (Behavior Changes)
 
-- [ ] **BUGS-12** (MEDIUM - 1 SP) - Aggressive Default Commit Classification
-  **Problem:** Unlabeled commits treated as PATCH, differs from bash semv
+- [ ] **BUGS-12** (MEDIUM - 1 SP) - Aggressive Default Commit Classification for Version Bumps
+  **Problem:** Unlabeled commits treated as PATCH for version bumps, differs from bash semv
   - commit_analyzer.py:186 defaults to `BumpType.PATCH`
-  - bash semv only counts explicitly labeled commits
-  - Unlabeled commits should be ignored or treated as DEV
+  - bash semv only counts explicitly labeled commits for version changes
+  - Unlabeled commits should be ignored for version bumps (return `BumpType.NONE`)
+
+  **IMPORTANT DISTINCTION:**
+  - ✅ Build count (bc): ALL commits count (correct behavior - don't change!)
+  - ❌ Version bumps (next): Only LABELED commits should trigger version changes
 
   **Code:**
   ```python
   # src/semvx/core/commit_analyzer.py:184-186
   # Default: treat as patch if no prefix matches
   # (conservative approach - any unlabeled commit is a patch)
-  return BumpType.PATCH
+  return BumpType.PATCH  # ← WRONG for version bumps
   ```
 
   **Bash semv behavior:**
-  - Only counts: `major|breaking|api`, `feat|feature|minor`, `fix|patch|bug`
-  - Ignores: unlabeled, `doc:`, `admin:`, `lic:`, `clean:`
-  - More conservative: explicit is better than implicit
+  - Version bumps only for: `major|breaking|api`, `feat|feature|minor`, `fix|patch|bug`
+  - Ignores unlabeled for version: `doc:`, `admin:`, `lic:`, `clean:`, unlabeled
+  - Build count includes ALL commits (this is correct!)
+  - More conservative: explicit labels required for version changes
 
   **Impact:**
   - ⚠️ Can cause unexpected version bumps from maintenance commits
@@ -442,13 +447,14 @@
   - ⚠️ Documentation claims to follow "semv conventions" but diverges
 
   **Examples:**
-  - Commit: "update README" → semvx treats as PATCH (wrong!)
-  - Commit: "refactor internal function" → semvx treats as PATCH (wrong!)
-  - Should require explicit labels: "fix: update README"
+  - Commit: "update README" → semvx treats as PATCH (wrong! should be NONE)
+  - Commit: "refactor internal function" → semvx treats as PATCH (wrong! should be NONE)
+  - Commit: "doc: update docs" → correctly ignored by IGNORED_PREFIXES (correct!)
+  - Should require explicit labels: "fix: update README" → PATCH (correct!)
 
   **Fix Required:**
-  - Change default return to `BumpType.NONE` or `BumpType.DEV`
-  - Update documentation to clarify behavior
+  - Change default return to `BumpType.NONE` (not DEV)
+  - Update documentation to clarify: build count ≠ version bump logic
   - Add tests for unlabeled commit handling
   - Consider adding `--strict` flag for bash semv compatibility
 

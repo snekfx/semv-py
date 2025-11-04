@@ -82,22 +82,25 @@ semvx next --verbose
 
 ---
 
-### BUG-003: Default Commit Classification is Too Aggressive
+### BUG-003: Default Commit Classification is Too Aggressive for Version Bumps
 **Severity**: 🟡 MEDIUM
 **Location**: `src/semvx/core/commit_analyzer.py:184-186`
 
 **Description**:
-The commit analyzer treats unlabeled commits as PATCH by default. This is overly aggressive and differs from bash semv behavior.
+The commit analyzer treats unlabeled commits as PATCH by default for version bumps. This is overly aggressive and differs from bash semv behavior.
+
+**IMPORTANT**: This is specifically about **version bumps** (the `next` command), NOT build count. Build count (bc) correctly includes all commits.
 
 **Code**:
 ```python
 # Default: treat as patch if no prefix matches
 # (conservative approach - any unlabeled commit is a patch)
-return BumpType.PATCH
+return BumpType.PATCH  # ← Wrong for version bumps
 ```
 
 **Bash semv behavior**:
-- Only counts commits with explicit labels (`major|breaking|api`, `feat|feature|minor`, `fix|patch|bug`)
+- **Version bumps**: Only counts commits with explicit labels (`major|breaking|api`, `feat|feature|minor`, `fix|patch|bug`)
+- **Build count**: Includes ALL commits (this is correct behavior!)
 - Unlabeled commits are ignored for version calculation
 - More conservative: "explicit is better than implicit"
 
@@ -105,9 +108,10 @@ return BumpType.PATCH
 - Can cause unexpected version bumps from maintenance commits
 - Breaks compatibility with bash semv workflows
 - Documentation claims to follow semv conventions but diverges
+- Note: Build count functionality is correct - this only affects version bump calculation
 
 **Fix Required**:
-Change default return to `BumpType.NONE` or `BumpType.DEV`
+Change default return to `BumpType.NONE` (not `BumpType.DEV`)
 
 ---
 
