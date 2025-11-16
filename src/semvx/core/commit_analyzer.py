@@ -2,11 +2,11 @@
 Commit analyzer for semv - Analyzes git commits to determine version bumps.
 
 Implements the full semv commit label convention:
-- major|breaking|api|arch|ux: → Major bump
-- feat|feature|add|minor|ref|mrg: → Minor bump
+- major|breaking: → Major bump
+- feat|feature|add|minor|ref|mrg|api|arch|ux: → Minor bump
 - fix|patch|bug|hotfix|up|imp|qol|stb: → Patch bump
 - dev: → Dev build
-- doc|admin|lic|clean|x: → Ignored
+- doc|admin|lic|clean|x|chore: → Ignored
 """
 
 import subprocess
@@ -43,15 +43,15 @@ class CommitAnalyzer:
     """Analyzes git commits to determine version bumps."""
 
     # Commit label patterns (order matters - checked in sequence)
-    MAJOR_PREFIXES = ["major:", "breaking:", "api:", "arch:", "ux:"]
+    MAJOR_PREFIXES = ["major:", "breaking:"]
 
-    MINOR_PREFIXES = ["feat:", "feature:", "add:", "minor:", "ref:", "mrg:"]
+    MINOR_PREFIXES = ["feat:", "feature:", "add:", "minor:", "ref:", "mrg:", "api:", "arch:", "ux:"]
 
     PATCH_PREFIXES = ["fix:", "patch:", "bug:", "hotfix:", "up:", "imp:", "qol:", "stb:"]
 
     DEV_PREFIXES = ["dev:"]
 
-    IGNORED_PREFIXES = ["doc:", "admin:", "lic:", "clean:", "x:"]
+    IGNORED_PREFIXES = ["doc:", "admin:", "lic:", "clean:", "x:", "chore:"]
 
     def __init__(self, repo_path: Path):
         """

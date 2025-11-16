@@ -580,26 +580,58 @@ def do_get_command():
             # Show all detected versions
             print("📦 Version Sources")
             print("=" * 60)
+            print()
 
             found_any = False
+
+            # Package Files Section
+            print("\033[1m=== Package Files ===\033[0m")
             for project in context["projects"]:
                 ptype = project["type"]
                 version = project.get("version", "N/A")
                 vfile = project.get("version_file", "N/A")
 
-                print(f"\n{ptype.upper()}:")
-                print(f"  Version: {version}")
-                print(f"  File:    {vfile}")
+                print(f"  {ptype} ({vfile}): {version}")
                 found_any = True
 
-            # Git tag
+            # Git Repository Section
+            print()
+            print("\033[1m=== Git Repository ===\033[0m")
             if context["repository"]["type"] == "git":
                 git_repo = GitRepository(repo_path)
                 latest_tag = git_repo.get_latest_tag()
                 if latest_tag:
-                    print("\nGIT:")
-                    print(f"  Latest tag: {latest_tag}")
+                    print(f"  latest tag: {latest_tag}")
                     found_any = True
+                else:
+                    print("  latest tag: none")
+
+            # SEMV Analysis Section
+            print()
+            print("\033[1m=== SEMV Analysis ===\033[0m")
+            if context["repository"]["type"] == "git":
+                from semvx.core.repository_status import RepositoryAnalyzer
+                try:
+                    analyzer = RepositoryAnalyzer(repo_path)
+                    status = analyzer.get_status()
+                    if status.next_version:
+                        print(f"  calculated next: {status.next_version}")
+                        found_any = True
+
+                    # Build number
+                    if status.local_build:
+                        print(f"  build number: {status.local_build}")
+                except Exception:
+                    pass
+
+            # Project Type Section
+            print()
+            print("\033[1m=== Project Type ===\033[0m")
+            if context["projects"]:
+                detected_types = ", ".join([p["type"] for p in context["projects"]])
+                print(f"  detected: {detected_types}")
+            else:
+                print("  detected: none/unknown")
 
             if not found_any:
                 print("\nNo version sources detected.")
