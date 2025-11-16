@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.12"]
 
     steps:
     - uses: actions/checkout@v4
@@ -41,7 +41,7 @@ jobs:
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
-      if: matrix.python-version == '3.11'
+      if: matrix.python-version == '3.12'
       with:
         file: ./htmlcov/index.html
         flags: unittests

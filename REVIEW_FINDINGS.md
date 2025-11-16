@@ -1,7 +1,6 @@
 # semvx (semv-py) Code Review - Defects, Misconceptions & Inefficiencies
 
 **Review Date**: 2025-11-04
-**Reviewer**: Claude (AI Assistant)
 **Scope**: Full codebase review comparing semvx (Python) against semv (Bash)
 
 ---
